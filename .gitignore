@@ -17,7 +17,7 @@ SETUP-REAL-PRIZES.md
 .cursorrules
 # testing
 /coverage
-
+.env.local
 # next.js
 /.next/
 /out/
