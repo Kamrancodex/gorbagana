@@ -32,7 +32,9 @@ export function WalletProviders({ children }: WalletProvidersProps) {
   const endpoint = useMemo(() => {
     // Gorbagana testnet RPC - replace with actual Gorbagana RPC URL when available
     return (
-      process.env.NEXT_PUBLIC_SOLANA_RPC_URL || "https://api.devnet.solana.com"
+      process.env.NEXT_PUBLIC_GORBAGANA_RPC_URL ||
+      process.env.NEXT_PUBLIC_SOLANA_RPC_URL ||
+      "https://api.devnet.solana.com"
     );
   }, []);
 

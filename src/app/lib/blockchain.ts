@@ -21,11 +21,12 @@ import { WalletContextState } from "@solana/wallet-adapter-react";
 // Configuration - GORBAGANA NETWORK 🚀
 // Gorbagana is a Solana fork optimized for games and community-driven development
 // Currently running on Testnet v2 (Devnet) with Mainnet in development
-const GORBAGANA_RPC = "https://rpc.gorbagana.wtf/";
+const GORBAGANA_RPC =
+  process.env.NEXT_PUBLIC_GORBAGANA_RPC_URL || "https://rpc.gorbagana.wtf/";
 
 // Fallback RPC endpoints in case primary fails
 const FALLBACK_RPC_ENDPOINTS = [
-  "https://rpc.gorbagana.wtf/",
+  process.env.NEXT_PUBLIC_GORBAGANA_RPC_URL || "https://rpc.gorbagana.wtf/",
   // Additional endpoints can be added as the network expands
 ];
 
@@ -265,7 +266,9 @@ export const getPlayerBalance = async (
     try {
       console.log("🔄 Trying backend proxy...");
       const response = await fetch(
-        `http://localhost:3001/api/balance/${walletAddress}`
+        `${
+          process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3001"
+        }/api/balance/${walletAddress}`
       );
 
       if (response.ok) {
@@ -450,7 +453,10 @@ export const payEntryFee = async (
 
     console.log(`📡 Transaction sent: ${txSignature}`);
     console.log(
-      `🔗 Check transaction: https://explorer.gorbagana.wtf/tx/${txSignature}`
+      `🔗 Check transaction: ${
+        process.env.NEXT_PUBLIC_GORBAGANA_EXPLORER_URL ||
+        "https://explorer.gorbagana.wtf"
+      }/tx/${txSignature}`
     );
 
     // Wait for confirmation with improved timeout and retry logic
@@ -675,7 +681,9 @@ export const syncMockBalanceFromBackend = async (
 ): Promise<number> => {
   try {
     const response = await fetch(
-      `http://localhost:3001/api/mock-balance/${walletAddress}`
+      `${
+        process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3001"
+      }/api/mock-balance/${walletAddress}`
     );
     if (response.ok) {
       const data = await response.json();
@@ -696,7 +704,9 @@ export const updateMockBalanceOnBackend = async (
 ): Promise<number> => {
   try {
     const response = await fetch(
-      `http://localhost:3001/api/mock-balance/${walletAddress}`,
+      `${
+        process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3001"
+      }/api/mock-balance/${walletAddress}`,
       {
         method: "POST",
         headers: {

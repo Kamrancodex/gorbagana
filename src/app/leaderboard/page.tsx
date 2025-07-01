@@ -58,14 +58,18 @@ export default function LeaderboardPage() {
     try {
       // Fetch leaderboard
       const leaderboardResponse = await fetch(
-        `http://localhost:3001/leaderboard/${gameType}`
+        `${
+          process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3001"
+        }/leaderboard/${gameType}`
       );
       const leaderboardData = await leaderboardResponse.json();
       setLeaderboard(leaderboardData.leaderboard || []);
 
       // Fetch recent matches
       const matchesResponse = await fetch(
-        `http://localhost:3001/matches/${gameType}`
+        `${
+          process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3001"
+        }/matches/${gameType}`
       );
       const matchesData = await matchesResponse.json();
       setRecentMatches(matchesData.matches || []);
