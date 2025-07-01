@@ -422,14 +422,16 @@ export const payEntryFee = async (
   }
 
   try {
-    // Check balance first
+    // Check balance first with buffer for transaction fees and precision
     const balance = await getPlayerBalance(wallet.publicKey.toBase58());
-    if (balance < betAmount) {
+    const requiredBalance = betAmount + 0.001; // Add small buffer for tx fees and precision
+
+    if (balance < requiredBalance) {
+      // Show precise balance for better debugging
+      const preciseBalance = balance.toFixed(6);
       return {
         success: false,
-        error: `Insufficient balance. Need ${betAmount} gGOR, have ${balance.toFixed(
-          2
-        )} gGOR`,
+        error: `Insufficient balance. Need ${betAmount} gGOR (+fees), have ${preciseBalance} gGOR. Please add more funds.`,
       };
     }
 

@@ -9,12 +9,7 @@ import {
   payEntryFeeForDisplay,
   PlayerBalance,
 } from "../lib/blockchain";
-import {
-  getMockBalance,
-  payMockEntryFee,
-  getMockWalletAddress,
-  generateMockTxSignature,
-} from "../lib/mock-wallet";
+import { getPlayerBalance, payEntryFee } from "../lib/blockchain";
 
 type Player = "X" | "O" | null;
 type Board = Player[];
@@ -57,7 +52,6 @@ export default function GamePage() {
   const { socket, connected: wsConnected, sendMessage } = useGameWebSocket();
 
   const betAmount = Number(searchParams.get("bet")) || 1;
-  const isMockMode = searchParams.get("mock") === "true";
 
   const [gameState, setGameState] = useState<GameState>({
     players: [],
@@ -88,57 +82,59 @@ export default function GamePage() {
   const [myBalance, setMyBalance] = useState<number>(0);
   const [paymentInProgress, setPaymentInProgress] = useState<boolean>(false);
   const [paymentError, setPaymentError] = useState<string | null>(null);
+  const [timeoutCountdown, setTimeoutCountdown] = useState<number | null>(null);
 
   useEffect(() => {
-    if (!connected && !isMockMode) {
+    if (!connected) {
       router.push("/");
     }
-  }, [connected, isMockMode, router]);
+  }, [connected, router]);
 
   // Load player balance
   useEffect(() => {
     const loadBalance = async () => {
-      if (isMockMode) {
-        const balance = getMockBalance();
-        setMyBalance(balance);
-      } else if (publicKey) {
-        const balance = await getBalanceForDisplay(publicKey.toBase58());
+      if (publicKey) {
+        const balance = await getPlayerBalance(publicKey.toBase58());
         setMyBalance(balance);
       }
     };
 
     loadBalance();
-  }, [publicKey, isMockMode]);
+  }, [publicKey]);
 
   // Refresh balance every 10 seconds
   useEffect(() => {
-    if (isMockMode) {
-      const interval = setInterval(() => {
-        const balance = getMockBalance();
-        setMyBalance(balance);
-      }, 5000);
-      return () => clearInterval(interval);
-    } else if (publicKey) {
+    if (publicKey) {
       const interval = setInterval(async () => {
-        const balance = await getBalanceForDisplay(publicKey.toBase58());
+        const balance = await getPlayerBalance(publicKey.toBase58());
         setMyBalance(balance);
       }, 10000);
       return () => clearInterval(interval);
     }
-  }, [publicKey, isMockMode]);
+  }, [publicKey]);
+
+  // Refresh balance immediately when game finishes (prize distribution)
+  useEffect(() => {
+    if (gameState.gamePhase === "finished" && publicKey) {
+      setTimeout(async () => {
+        const balance = await getPlayerBalance(publicKey.toBase58());
+        setMyBalance(balance);
+        console.log(
+          `🎯 [REAL] Balance refreshed after game finish: ${balance} gGOR`
+        );
+      }, 2000); // Longer delay for real blockchain confirmations
+    }
+  }, [gameState.gamePhase, publicKey]);
 
   useEffect(() => {
     if (!socket || !wsConnected) return;
 
-    const walletAddress = isMockMode
-      ? getMockWalletAddress()
-      : publicKey?.toBase58();
+    const walletAddress = publicKey?.toBase58();
     if (!walletAddress) return;
 
-    console.log(`🔗 [${isMockMode ? "MOCK" : "REAL"}] Joining tic-tac-toe:`, {
+    console.log(`🔗 [REAL] Joining tic-tac-toe:`, {
       wallet: walletAddress,
       betAmount: betAmount,
-      isMockMode,
       wsConnected,
     });
 
@@ -159,12 +155,32 @@ export default function GamePage() {
 
     socket.on("waitingForPlayer", () => {
       setConnectionStatus("waiting");
+      // Start 5-minute countdown
+      const startTime = Date.now();
+      const countdownInterval = setInterval(() => {
+        const elapsed = Date.now() - startTime;
+        const remaining = Math.max(0, 300 - Math.floor(elapsed / 1000)); // 5 minutes = 300 seconds
+        setTimeoutCountdown(remaining);
+
+        if (remaining === 0) {
+          clearInterval(countdownInterval);
+        }
+      }, 1000);
+
+      // Clear countdown when component unmounts or game starts
+      return () => clearInterval(countdownInterval);
+    });
+
+    socket.on("ticTacToeTimeout", (data) => {
+      alert(`${data.message}\nRefund: ${data.refundAmount} gGOR`);
+      router.push(data.redirectTo || "/games");
     });
 
     return () => {
       socket.off("ticTacToeState");
       socket.off("ticTacToeJoined");
       socket.off("waitingForPlayer");
+      socket.off("ticTacToeTimeout");
     };
   }, [socket, wsConnected, publicKey, sendMessage]);
 
@@ -195,9 +211,7 @@ export default function GamePage() {
   };
 
   const confirmPayment = async () => {
-    const walletAddress = isMockMode
-      ? getMockWalletAddress()
-      : publicKey?.toBase58();
+    const walletAddress = publicKey?.toBase58();
     if (!walletAddress) return;
 
     setPaymentInProgress(true);
@@ -209,30 +223,16 @@ export default function GamePage() {
         .toString(36)
         .substr(2, 9)}`;
 
-      let result: { success: boolean; txSignature?: string; error?: string };
-      if (isMockMode) {
-        // Use mock payment system
-        const mockResult = payMockEntryFee(betAmount, gameId);
-        result = {
-          success: mockResult.success,
-          txSignature: mockResult.success
-            ? generateMockTxSignature()
-            : undefined,
-          error: mockResult.error,
-        };
-      } else {
-        // Execute the real blockchain transaction
-        result = await payEntryFeeForDisplay(wallet, betAmount, gameId);
-      }
+      // Execute the real blockchain transaction
+      const result = await payEntryFee(wallet, betAmount, gameId);
 
       if (result.success) {
         console.log(`💰 Payment successful: ${result.txSignature}`);
 
-        // Update local balance immediately
-        if (isMockMode) {
-          setMyBalance(getMockBalance());
-        } else {
-          setMyBalance((prev) => prev - betAmount);
+        // Update local balance after payment
+        if (publicKey) {
+          const newBalance = await getPlayerBalance(publicKey.toBase58());
+          setMyBalance(newBalance);
         }
 
         // Notify the server
@@ -305,6 +305,12 @@ export default function GamePage() {
               <div className="text-blue-400 font-bold">
                 ⏳ Waiting for another player to join...
               </div>
+              {timeoutCountdown !== null && (
+                <div className="text-yellow-400 text-lg font-bold mt-2">
+                  Auto-refund in: {Math.floor(timeoutCountdown / 60)}:
+                  {(timeoutCountdown % 60).toString().padStart(2, "0")}
+                </div>
+              )}
               <div className="text-gray-300 text-sm mt-2">
                 Share this page with a friend!
               </div>
@@ -357,20 +363,25 @@ export default function GamePage() {
                     <div className="text-sm text-gray-300 mb-2">
                       Your Balance:{" "}
                       <span className="text-yellow-400 font-bold">
-                        {myBalance.toFixed(2)} gGOR
+                        {myBalance < betAmount + 0.01
+                          ? myBalance.toFixed(6)
+                          : myBalance.toFixed(2)}{" "}
+                        gGOR
                       </span>
-                      {myBalance < betAmount && (
+                      {myBalance < betAmount + 0.001 && (
                         <span className="text-red-400 ml-2">
-                          ⚠️ Insufficient funds!
+                          ⚠️ Insufficient funds! (Need {betAmount} + fees)
                         </span>
                       )}
                     </div>
 
                     <button
                       onClick={confirmPayment}
-                      disabled={paymentInProgress || myBalance < betAmount}
+                      disabled={
+                        paymentInProgress || myBalance < betAmount + 0.001
+                      }
                       className={`font-bold py-3 px-6 rounded-lg transition-colors ${
-                        paymentInProgress || myBalance < betAmount
+                        paymentInProgress || myBalance < betAmount + 0.001
                           ? "bg-gray-600 text-gray-400 cursor-not-allowed"
                           : "bg-green-500 hover:bg-green-400 text-white"
                       }`}

@@ -165,9 +165,9 @@ export const resetMockWallet = (): void => {
   getMockWalletState(); // This will create a fresh wallet
 };
 
-// Get mock wallet address (generates a consistent fake address)
+// Get mock wallet address (generates a consistent demo address)
 export const getMockWalletAddress = (): string => {
-  // Generate a consistent mock address based on some browser fingerprint
+  // Generate a consistent demo address based on some browser fingerprint
   const fingerprint =
     typeof window !== "undefined"
       ? `${navigator.userAgent}${screen.width}${screen.height}`
@@ -186,14 +186,14 @@ export const getMockWalletAddress = (): string => {
   let result = "";
   let currentHash = Math.abs(hash);
 
-  // Generate a 44-character Solana-like address
-  for (let i = 0; i < 44; i++) {
+  // Generate a 38-character address (demo_ + 38 chars = 43 total)
+  for (let i = 0; i < 38; i++) {
     result += chars[currentHash % chars.length];
     // Vary the hash for each character to avoid repetition
     currentHash = Math.abs((currentHash * 31 + i) % 2147483647);
   }
 
-  return result;
+  return `demo_${result}`;
 };
 
 // Check if we're in mock wallet mode

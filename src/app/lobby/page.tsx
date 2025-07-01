@@ -124,6 +124,56 @@ export default function LobbyPage() {
           </div>
         </div>
 
+        {/* Game Selection */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          {/* Tic Tac Toe */}
+          <div className="bg-black/30 backdrop-blur-md rounded-xl p-6 border border-white/10 text-center">
+            <div className="text-4xl mb-4">🎯</div>
+            <h3 className="text-xl font-bold text-white mb-2">Tic Tac Toe</h3>
+            <p className="text-gray-400 text-sm mb-4">
+              Classic 3x3 strategy game
+            </p>
+            <button
+              onClick={() => router.push("/tic-tac-toe")}
+              className="w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg transition-colors"
+            >
+              Play Now
+            </button>
+          </div>
+
+          {/* Orb Collector */}
+          <div className="bg-black/30 backdrop-blur-md rounded-xl p-6 border border-white/10 text-center">
+            <div className="text-4xl mb-4">🟢</div>
+            <h3 className="text-xl font-bold text-white mb-2">Orb Collector</h3>
+            <p className="text-gray-400 text-sm mb-4">
+              3D action collection game
+            </p>
+            <button
+              onClick={() => router.push("/orb-collector")}
+              className="w-full py-2 px-4 bg-green-600 hover:bg-green-700 text-white font-bold rounded-lg transition-colors"
+            >
+              Play Now
+            </button>
+          </div>
+
+          {/* Word Grid Game - NEW */}
+          <div className="bg-black/30 backdrop-blur-md rounded-xl p-6 border border-white/10 text-center">
+            <div className="text-4xl mb-4">🔤</div>
+            <h3 className="text-xl font-bold text-white mb-2">
+              Word Grid Battle
+            </h3>
+            <p className="text-gray-400 text-sm mb-4">
+              Strategic word building on 8x8 grid
+            </p>
+            <button
+              onClick={() => router.push("/word-grid")}
+              className="w-full py-2 px-4 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-lg transition-colors"
+            >
+              Play Now
+            </button>
+          </div>
+        </div>
+
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Game Rules */}
           <div className="bg-gray-800/50 p-6 rounded-xl border border-gray-700">

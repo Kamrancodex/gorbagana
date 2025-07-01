@@ -90,6 +90,23 @@ export default function MockGamesPage() {
       available: true,
     },
     {
+      id: "wordGrid",
+      name: "Word Grid Battle",
+      description:
+        "Strategic word building on an 8x8 grid! Take turns placing letters to form valid words. Chess-style timer adds pressure!",
+      icon: "🔤",
+      minBet: 0.5,
+      maxBet: 50,
+      players: "2 Players",
+      estimatedTime: "5-10 min",
+      stats: {
+        totalGames: 0,
+        activeRooms: 0,
+        totalVolume: 0,
+      },
+      available: true,
+    },
+    {
       id: "connect4",
       name: "Connect Four",
       description:
@@ -135,11 +152,13 @@ export default function MockGamesPage() {
     }
 
     if (gameId === "orbCollector") {
-      router.push(`/orb-collector?bet=${betAmount}&mock=true`);
+      router.push(`/demo/orb-collector?bet=${betAmount}`);
     } else if (gameId === "ticTacToe") {
-      router.push(`/game?bet=${betAmount}&mock=true`);
+      router.push(`/demo/game?bet=${betAmount}`);
+    } else if (gameId === "wordGrid") {
+      router.push(`/demo/word-grid?bet=${betAmount}`);
     } else {
-      alert("This game is coming soon!");
+      alert("This demo game is coming soon!");
     }
   };
 
@@ -156,9 +175,11 @@ export default function MockGamesPage() {
     setSelectedGame(gameId);
     setBetAmount(1); // Default bet
     if (gameId === "orbCollector") {
-      router.push(`/orb-collector?bet=1&mock=true`);
+      router.push(`/demo/orb-collector?bet=1`);
     } else if (gameId === "ticTacToe") {
-      router.push(`/game?bet=1&mock=true`);
+      router.push(`/demo/game?bet=1`);
+    } else if (gameId === "wordGrid") {
+      router.push(`/demo/word-grid?bet=1`);
     }
   };
 

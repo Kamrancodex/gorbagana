@@ -165,7 +165,7 @@ export default function Home() {
               </p>
 
               <button
-                onClick={() => router.push("/mock-games")}
+                onClick={() => router.push("/demo")}
                 className="w-full bg-gradient-to-r from-orange-500 to-purple-600 hover:from-orange-400 hover:to-purple-500 text-white font-bold py-4 px-8 rounded-xl text-xl transition-all duration-300 hover:scale-105 hover:shadow-2xl mb-4"
               >
                 🎮 START DEMO MODE

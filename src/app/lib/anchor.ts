@@ -5,14 +5,10 @@ import { useAnchorWallet, useConnection } from "@solana/wallet-adapter-react";
 import { useMemo } from "react";
 
 // Program ID for Token Takedown Royale (DEPLOYED CONTRACT)
-export const PROGRAM_ID = new PublicKey(
-  "GorTokenTakedown11111111111111111111111111"
-);
+export const PROGRAM_ID = new PublicKey("11111111111111111111111111111112");
 
 // GOR token mint address (official from Jupiter)
-export const GGOR_MINT = new PublicKey(
-  "71Jvq4Epe2FCJ7JFSF7jLXdNk1Wy4Bhqd9iL6bEFELvg"
-);
+export const GGOR_MINT = new PublicKey("11111111111111111111111111111113");
 
 export function useAnchorProgram() {
   const { connection } = useConnection();
