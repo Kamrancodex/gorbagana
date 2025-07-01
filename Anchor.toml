@@ -1,0 +1,23 @@
+[features]
+seeds = false
+skip-lint = false
+
+[programs.devnet]
+token_takedown = "GorTokenTakedown11111111111111111111111111"
+
+[programs.localnet]
+token_takedown = "GorTokenTakedown11111111111111111111111111"
+
+[registry]
+url = "https://api.apr.dev"
+
+[provider]
+cluster = "devnet"
+wallet = "~/.config/solana/id.json"
+
+[scripts]
+test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts"
+
+[[test.genesis]]
+address = "GorTokenTakedown11111111111111111111111111"
+program = "target/deploy/token_takedown.so" 

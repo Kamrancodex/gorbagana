@@ -1,36 +1,154 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Token Takedown Royale 🎮
 
-## Getting Started
+A multiplayer battle royale game built for the **Gorbagana Testnet Hackathon**.
 
-First, run the development server:
+## 🚀 Game Overview
+
+**Token Takedown Royale** is a fast-paced 60-second battle royale where players:
+
+- Pay **5 gGOR** entry fee to join
+- Collect token orbs worth **1-5 gGOR** each
+- Use **Freeze Ray** power-up (costs 1 gGOR) to freeze opponents
+- Compete for prize pool distribution: **50%/30%/20%** to top 3 players
+
+## 🛠 Tech Stack
+
+- **Frontend**: Next.js, React, Three.js, TailwindCSS
+- **Backend**: Node.js, Express, Socket.io
+- **Blockchain**: Solana/Gorbagana, Backpack Wallet
+- **Real-time**: WebSockets for multiplayer
+
+## 📦 Quick Setup
+
+### 1. Install Dependencies
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm run setup
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 2. Run Both Frontend & Backend
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+npm run dev:all
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### 3. Open Game
 
-## Learn More
+- Frontend: http://localhost:3000
+- Backend Health: http://localhost:3001/health
 
-To learn more about Next.js, take a look at the following resources:
+## 🎯 Game Flow
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+1. **Connect Wallet** → Backpack wallet required
+2. **Join Lobby** → Wait for 2-12 players
+3. **Pay Entry Fee** → 5 gGOR transaction
+4. **Battle Arena** → 60 seconds of mayhem
+5. **View Results** → Leaderboard and prizes
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 🎮 Controls
 
-## Deploy on Vercel
+- **WASD** or **Arrow Keys**: Move player
+- **Space**: Use Freeze Ray power-up
+- **Mouse**: Look around arena
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## 🏗 Project Structure
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```
+gorbagana-game/
+├── src/                    # Next.js frontend
+│   ├── app/
+│   │   ├── components/     # React components
+│   │   ├── lib/           # WebSocket client
+│   │   ├── lobby/         # Lobby page
+│   │   ├── game/          # Game page
+│   │   └── results/       # Results page
+│   └── ...
+├── backend/               # Node.js server
+│   ├── server.js         # Main WebSocket server
+│   └── package.json      # Backend dependencies
+└── ...
+```
+
+## 🔌 Backend API
+
+### WebSocket Events
+
+**Client → Server:**
+
+- `joinLobby` - Join game lobby
+- `joinGame` - Pay entry fee and ready up
+- `playerMove` - Move player in arena
+- `usePowerUp` - Activate freeze ray
+
+**Server → Client:**
+
+- `lobbyState` - Lobby player list and status
+- `gameState` - Real-time game state
+- `gameStarted` - Game launch notification
+- `powerUpUsed` - Power-up activation
+
+### HTTP Endpoints
+
+- `GET /health` - Server status and stats
+
+## 🌐 Environment Variables
+
+Create `.env.local` in root:
+
+```env
+NEXT_PUBLIC_WEBSOCKET_URL=http://localhost:3001
+NEXT_PUBLIC_SOLANA_RPC_URL=https://api.devnet.solana.com
+```
+
+## 🧪 Development Scripts
+
+```bash
+# Frontend only
+npm run dev
+
+# Backend only
+npm run server
+
+# Both together
+npm run dev:all
+
+# Setup all dependencies
+npm run setup
+```
+
+## 🎨 Features
+
+### ✅ Implemented
+
+- 🔗 Backpack wallet integration
+- 🏟️ 3D arena with Three.js
+- 🎮 Real-time multiplayer
+- 💰 Token collection system
+- ❄️ Freeze ray power-up
+- 🏆 Prize distribution
+- 📱 Mobile responsive
+
+### 🚧 Next Steps
+
+- 🔗 Smart contract integration
+- 🌍 Gorbagana testnet deployment
+- 🔐 Transaction verification
+- 📊 Persistent leaderboards
+
+## 🏆 Hackathon Features
+
+This project showcases:
+
+- **Creative token usage** - Entry fees, collectibles, power-up costs
+- **Real-time gameplay** - WebSocket multiplayer
+- **Solana integration** - Wallet connectivity and transactions
+- **Modern UI/UX** - Polished game interface
+- **Scalable architecture** - Modular frontend/backend
+
+## 📞 Support
+
+Built for the Gorbagana Testnet Hackathon. For issues or questions, check the server logs and WebSocket connections.
+
+---
+
+**Ready to battle? Connect your Backpack wallet and enter the arena!** 🚀

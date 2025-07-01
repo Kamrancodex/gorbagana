@@ -9,7 +9,12 @@
 !.yarn/plugins
 !.yarn/releases
 !.yarn/versions
-
+backend
+HACKATHON-SMART-CONTRACT.md
+PRIZE-DISTRIBUTION-SETUP.md
+REAL-PRIZE-SYSTEM.md
+SETUP-REAL-PRIZES.md
+.cursorrules
 # testing
 /coverage
 
@@ -39,3 +44,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Environment variables
+backend/.env
