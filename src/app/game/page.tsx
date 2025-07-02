@@ -176,11 +176,45 @@ export default function GamePage() {
       router.push(data.redirectTo || "/games");
     });
 
+    socket.on(
+      "paymentConfirmed",
+      (data: {
+        success: boolean;
+        amount?: number;
+        error?: string;
+        txSignature?: string;
+      }) => {
+        console.log(`💰 [Frontend] Payment confirmation received:`, data);
+
+        setPaymentInProgress(false);
+
+        if (data.success) {
+          console.log(
+            `✅ [Frontend] Payment verified! Amount: ${data.amount} GOR`
+          );
+          console.log(`📝 [Frontend] Transaction: ${data.txSignature}`);
+          setPaymentError(null);
+
+          // Refresh balance after successful payment
+          if (publicKey) {
+            getPlayerBalance(publicKey.toBase58()).then((balance) => {
+              setMyBalance(balance);
+              console.log(`🔄 [Frontend] Balance refreshed: ${balance} GOR`);
+            });
+          }
+        } else {
+          console.error(`❌ [Frontend] Payment failed: ${data.error}`);
+          setPaymentError(data.error || "Payment verification failed");
+        }
+      }
+    );
+
     return () => {
       socket.off("ticTacToeState");
       socket.off("ticTacToeJoined");
       socket.off("waitingForPlayer");
       socket.off("ticTacToeTimeout");
+      socket.off("paymentConfirmed");
     };
   }, [socket, wsConnected, publicKey, sendMessage]);
 

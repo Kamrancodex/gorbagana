@@ -2,8 +2,10 @@
 
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import dynamic from "next/dynamic";
+import { gsap } from "gsap";
+import Footer from "../components/Footer";
 
 // Dynamically import wallet components to prevent hydration errors
 const WalletButton = dynamic(() => import("../components/WalletButton"), {
@@ -29,10 +31,86 @@ export default function RealWalletGamesPage() {
   const [balanceLoading, setBalanceLoading] = useState(false);
   const [mounted, setMounted] = useState(false);
 
+  // Animation refs
+  const headerRef = useRef<HTMLDivElement>(null);
+  const titleRef = useRef<HTMLHeadingElement>(null);
+  const statsRef = useRef<HTMLDivElement>(null);
+  const walletRef = useRef<HTMLDivElement>(null);
+  const buttonsRef = useRef<HTMLDivElement>(null);
+
   // Prevent hydration mismatch
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  // GSAP animations on mount
+  useEffect(() => {
+    if (mounted && headerRef.current) {
+      const tl = gsap.timeline();
+
+      // Header entrance animation
+      tl.fromTo(
+        headerRef.current,
+        { opacity: 0, y: -50 },
+        { opacity: 1, y: 0, duration: 0.8, ease: "power2.out" }
+      );
+
+      // Title glitch effect
+      if (titleRef.current) {
+        tl.fromTo(
+          titleRef.current,
+          { opacity: 0, x: -100, textShadow: "0 0 0 transparent" },
+          {
+            opacity: 1,
+            x: 0,
+            textShadow: "0 0 20px #00ffff, 0 0 40px #ff00ff, 0 0 60px #ffff00",
+            duration: 1,
+            ease: "power2.out",
+          },
+          "-=0.5"
+        );
+      }
+
+      // Stats animation
+      if (statsRef.current) {
+        tl.fromTo(
+          statsRef.current,
+          { opacity: 0, scale: 0.8 },
+          { opacity: 1, scale: 1, duration: 0.6, ease: "back.out(1.7)" },
+          "-=0.3"
+        );
+      }
+
+      // Wallet info animation
+      if (walletRef.current) {
+        tl.fromTo(
+          walletRef.current,
+          { opacity: 0, x: -50 },
+          { opacity: 1, x: 0, duration: 0.5, ease: "power2.out" },
+          "-=0.4"
+        );
+      }
+
+      // Buttons animation
+      if (buttonsRef.current) {
+        tl.fromTo(
+          buttonsRef.current,
+          { opacity: 0, x: 50 },
+          { opacity: 1, x: 0, duration: 0.5, ease: "power2.out" },
+          "-=0.3"
+        );
+      }
+
+      // Continuous title glow animation
+      gsap.to(titleRef.current, {
+        textShadow: "0 0 30px #00ffff, 0 0 60px #ff00ff, 0 0 90px #ffff00",
+        duration: 2,
+        repeat: -1,
+        yoyo: true,
+        ease: "power2.inOut",
+      });
+    }
+  }, [mounted]);
 
   // Fetch real GOR balance when wallet connects
   useEffect(() => {
@@ -105,6 +183,18 @@ export default function RealWalletGamesPage() {
       estimatedTime: "5-10 min",
       route: "/word-grid",
     },
+    {
+      id: "pokemonCards",
+      name: "Pokemon Card Battle",
+      description:
+        "Collect and battle with Pokemon cards using real GOR cryptocurrency! Trade card packs and win prizes.",
+      icon: "🎴",
+      minBet: 1,
+      maxBet: 2,
+      players: "2-6 Players",
+      estimatedTime: "10-15 min",
+      route: "/pokemon-cards",
+    },
   ];
 
   const handleGameSelect = (game: GameCard) => {
@@ -129,84 +219,244 @@ export default function RealWalletGamesPage() {
 
   if (!mounted) {
     return (
-      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
-        <div className="text-white text-xl">Loading real wallet games...</div>
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="text-cyan-400 text-xl animate-pulse">
+          Loading gaming arena...
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-green-900">
-      {/* Header */}
-      <div className="p-4 md:p-6 bg-black/50">
-        <div className="max-w-6xl mx-auto">
-          {/* Title Section */}
-          <div className="text-center md:text-left mb-4 md:mb-0">
-            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white">
-              🔗 Real Wallet Gaming
+    <div className="min-h-screen bg-black relative overflow-hidden">
+      {/* Animated Background Grid */}
+      <div className="absolute inset-0 opacity-20">
+        <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/10 via-purple-500/10 to-yellow-500/10"></div>
+        <div
+          className="absolute inset-0"
+          style={{
+            backgroundImage: `
+              linear-gradient(rgba(0,255,255,0.1) 1px, transparent 1px),
+              linear-gradient(90deg, rgba(0,255,255,0.1) 1px, transparent 1px)
+            `,
+            backgroundSize: "50px 50px",
+            animation: "gridMove 20s linear infinite",
+          }}
+        ></div>
+      </div>
+
+      {/* Floating Orbs */}
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute top-20 left-10 w-4 h-4 bg-cyan-400 rounded-full animate-bounce opacity-60"></div>
+        <div className="absolute top-40 right-20 w-3 h-3 bg-purple-400 rounded-full animate-pulse opacity-40"></div>
+        <div className="absolute bottom-40 left-1/4 w-5 h-5 bg-yellow-400 rounded-full animate-ping opacity-50"></div>
+        <div className="absolute top-1/3 right-10 w-2 h-2 bg-green-400 rounded-full animate-bounce opacity-70"></div>
+      </div>
+
+      {/* Modern Cyberpunk Header */}
+      <div
+        ref={headerRef}
+        className="relative z-10 p-6 bg-gradient-to-r from-black/90 via-purple-900/30 to-black/90 backdrop-blur-xl border-b border-cyan-400/20"
+      >
+        <div className="max-w-7xl mx-auto">
+          {/* Main Title Section */}
+          <div className="text-center mb-8">
+            <h1
+              ref={titleRef}
+              className="text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-purple-400 to-yellow-400 mb-4 tracking-wider"
+              style={{
+                fontFamily: "monospace",
+                textShadow: "0 0 20px #00ffff, 0 0 40px #ff00ff",
+              }}
+            >
+              ⚡ GORBAGANA ARENA ⚡
             </h1>
-            <div className="text-xs sm:text-sm text-green-400 font-bold flex items-center justify-center md:justify-start gap-2 mt-1">
-              <span>🔗</span>
-              <span className="text-center md:text-left">
-                BLOCKCHAIN POWERED - Real GOR Cryptocurrency
+            <div className="flex items-center justify-center gap-3 text-lg font-bold">
+              <span className="bg-gradient-to-r from-green-400 to-blue-400 text-black px-4 py-2 rounded-full animate-pulse">
+                🔗 BLOCKCHAIN POWERED
+              </span>
+              <span className="bg-gradient-to-r from-yellow-400 to-red-400 text-black px-4 py-2 rounded-full animate-pulse">
+                💰 REAL GOR CRYPTO
+              </span>
+              <span className="bg-gradient-to-r from-purple-400 to-pink-400 text-black px-4 py-2 rounded-full animate-pulse">
+                🎮 LIVE BATTLES
               </span>
             </div>
           </div>
 
+          {/* Stats & Info Grid */}
+          <div
+            ref={statsRef}
+            className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8"
+          >
+            <div className="bg-black/60 backdrop-blur-lg rounded-xl p-4 border border-cyan-400/30 hover:border-cyan-400/60 transition-all duration-300 hover:scale-105">
+              <div className="text-center">
+                <div className="text-3xl font-black text-cyan-400 mb-1">
+                  {balance.toFixed(3)}
+                </div>
+                <div className="text-cyan-300 text-sm font-bold">
+                  💎 GOR BALANCE
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-black/60 backdrop-blur-lg rounded-xl p-4 border border-purple-400/30 hover:border-purple-400/60 transition-all duration-300 hover:scale-105">
+              <div className="text-center">
+                <div className="text-3xl font-black text-purple-400 mb-1">
+                  {connected ? "ONLINE" : "OFFLINE"}
+                </div>
+                <div className="text-purple-300 text-sm font-bold">
+                  🔌 WALLET STATUS
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-black/60 backdrop-blur-lg rounded-xl p-4 border border-yellow-400/30 hover:border-yellow-400/60 transition-all duration-300 hover:scale-105">
+              <div className="text-center">
+                <div className="text-3xl font-black text-yellow-400 mb-1">
+                  LIVE
+                </div>
+                <div className="text-yellow-300 text-sm font-bold">
+                  ⚡ NETWORK
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-black/60 backdrop-blur-lg rounded-xl p-4 border border-green-400/30 hover:border-green-400/60 transition-all duration-300 hover:scale-105">
+              <div className="text-center">
+                <div className="text-3xl font-black text-green-400 mb-1">4</div>
+                <div className="text-green-300 text-sm font-bold">🎯 GAMES</div>
+              </div>
+            </div>
+          </div>
+
           {/* Wallet & Navigation Section */}
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mt-4">
-            {/* Wallet Info */}
-            <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+          <div className="flex flex-col lg:flex-row items-center justify-between gap-6">
+            {/* Wallet Connection Status */}
+            <div ref={walletRef} className="flex items-center gap-4">
               {connected && publicKey ? (
-                <div className="text-white text-center sm:text-left">
-                  <div className="text-xs sm:text-sm text-gray-300">
-                    {publicKey.toBase58().slice(0, 6)}...
-                    {publicKey.toBase58().slice(-4)}
-                  </div>
-                  <div className="text-base sm:text-lg font-bold text-green-400 flex items-center justify-center sm:justify-start gap-2">
-                    💰{" "}
-                    {balanceLoading
-                      ? "Loading..."
-                      : `${balance.toFixed(4)} GOR`}
-                    <button
-                      onClick={fetchRealBalance}
-                      className="text-xs bg-green-500 hover:bg-green-400 px-2 py-1 rounded transition-colors"
-                      disabled={balanceLoading}
-                    >
-                      🔄
-                    </button>
+                <div className="bg-gradient-to-r from-green-500/20 to-blue-500/20 backdrop-blur-lg rounded-xl p-4 border border-green-400/40 hover:border-green-400/70 transition-all duration-300">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 bg-green-400 rounded-full flex items-center justify-center animate-pulse">
+                      <span className="text-2xl">🟢</span>
+                    </div>
+                    <div>
+                      <div className="text-green-400 font-black text-lg">
+                        WALLET CONNECTED
+                      </div>
+                      <div className="text-green-300 text-sm font-mono">
+                        {publicKey.toBase58().slice(0, 8)}...
+                        {publicKey.toBase58().slice(-6)}
+                      </div>
+                      <div className="text-white font-bold flex items-center gap-2">
+                        💰{" "}
+                        {balanceLoading
+                          ? "LOADING..."
+                          : `${balance.toFixed(4)} GOR`}
+                        <button
+                          onClick={fetchRealBalance}
+                          className="text-xs bg-cyan-500 hover:bg-cyan-400 px-3 py-1 rounded-full transition-all duration-300 hover:scale-110"
+                          disabled={balanceLoading}
+                        >
+                          🔄 REFRESH
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 </div>
               ) : (
-                <div className="text-white text-center sm:text-left">
-                  <div className="text-xs sm:text-sm text-red-400">
-                    Wallet Not Connected
-                  </div>
-                  <div className="text-base sm:text-lg font-bold text-red-400">
-                    ⚠️ Connect Required
+                <div className="bg-gradient-to-r from-red-500/20 to-orange-500/20 backdrop-blur-lg rounded-xl p-4 border border-red-400/40 hover:border-red-400/70 transition-all duration-300">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 bg-red-400 rounded-full flex items-center justify-center animate-pulse">
+                      <span className="text-2xl">🔴</span>
+                    </div>
+                    <div>
+                      <div className="text-red-400 font-black text-lg">
+                        WALLET DISCONNECTED
+                      </div>
+                      <div className="text-red-300 text-sm">
+                        Connect to enter the arena
+                      </div>
+                      <div className="mt-2">
+                        <WalletButton />
+                      </div>
+                    </div>
                   </div>
                 </div>
               )}
             </div>
 
             {/* Action Buttons */}
-            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+            <div ref={buttonsRef} className="flex gap-4">
               <button
                 onClick={() => router.push("/demo")}
-                className="bg-orange-500 text-white px-4 py-2.5 rounded-lg font-bold hover:bg-orange-400 transition-colors text-sm w-full sm:w-auto"
+                className="group bg-gradient-to-r from-orange-500 to-red-500 text-white px-8 py-4 rounded-xl font-black text-lg border border-orange-400/50 hover:border-orange-400 transition-all duration-300 hover:scale-110 hover:shadow-lg hover:shadow-orange-500/50"
               >
-                🎭 Switch to Demo
+                <span className="flex items-center gap-2">
+                  🎭 DEMO MODE
+                  <span className="group-hover:rotate-12 transition-transform duration-300">
+                    ⚡
+                  </span>
+                </span>
               </button>
+
               <button
                 onClick={() => router.push("/leaderboard")}
-                className="bg-yellow-500 text-black px-4 py-2.5 rounded-lg font-bold hover:bg-yellow-400 transition-colors text-sm w-full sm:w-auto"
+                className="group bg-gradient-to-r from-yellow-500 to-amber-500 text-black px-8 py-4 rounded-xl font-black text-lg border border-yellow-400/50 hover:border-yellow-400 transition-all duration-300 hover:scale-110 hover:shadow-lg hover:shadow-yellow-500/50"
               >
-                🏆 Leaderboard
+                <span className="flex items-center gap-2">
+                  🏆 LEADERBOARD
+                  <span className="group-hover:bounce transition-transform duration-300">
+                    👑
+                  </span>
+                </span>
               </button>
             </div>
           </div>
         </div>
       </div>
+
+      <style jsx>{`
+        @keyframes gridMove {
+          0% {
+            transform: translate(0, 0);
+          }
+          100% {
+            transform: translate(50px, 50px);
+          }
+        }
+
+        @keyframes glitch {
+          0% {
+            text-shadow: 0.05em 0 0 #00ffff, -0.05em -0.025em 0 #ff00ff,
+              0.025em 0.05em 0 #ffff00;
+          }
+          15% {
+            text-shadow: 0.05em 0 0 #00ffff, -0.05em -0.025em 0 #ff00ff,
+              0.025em 0.05em 0 #ffff00;
+          }
+          16% {
+            text-shadow: -0.05em -0.025em 0 #00ffff, 0.025em 0.025em 0 #ff00ff,
+              -0.05em -0.05em 0 #ffff00;
+          }
+          49% {
+            text-shadow: -0.05em -0.025em 0 #00ffff, 0.025em 0.025em 0 #ff00ff,
+              -0.05em -0.05em 0 #ffff00;
+          }
+          50% {
+            text-shadow: 0.025em 0.05em 0 #00ffff, 0.05em 0 0 #ff00ff,
+              0 -0.05em 0 #ffff00;
+          }
+          99% {
+            text-shadow: 0.025em 0.05em 0 #00ffff, 0.05em 0 0 #ff00ff,
+              0 -0.05em 0 #ffff00;
+          }
+          100% {
+            text-shadow: -0.025em 0 0 #00ffff, -0.025em -0.025em 0 #ff00ff,
+              -0.025em -0.05em 0 #ffff00;
+          }
+        }
+      `}</style>
 
       {/* Real Wallet Connection Status */}
       <div className="max-w-6xl mx-auto p-4 md:p-6">
@@ -486,6 +736,9 @@ export default function RealWalletGamesPage() {
           </div>
         </div>
       </div>
+
+      {/* Footer with attribution */}
+      <Footer />
     </div>
   );
 }

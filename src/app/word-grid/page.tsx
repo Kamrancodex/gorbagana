@@ -13,6 +13,7 @@ import {
   getBalanceDisplayText,
   requiresWalletConnection,
 } from "../lib/game-utils";
+import Footer from "../components/Footer";
 
 interface GridCell {
   letter: string;
@@ -1491,6 +1492,9 @@ export default function WordGridGame() {
           </div>
         )}
       </div>
+
+      {/* Footer with attribution */}
+      <Footer />
     </div>
   );
 }

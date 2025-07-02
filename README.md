@@ -27,8 +27,9 @@ A **fully functional blockchain gaming platform** with real cryptocurrency prize
 ### ✅ **Multi-Game Platform** - OPERATIONAL
 
 - **Tic-Tac-Toe**: Classic strategy game with 1 GOR entry, 1.8 GOR prize
-- **Orb Collector**: Real-time competitive collection game (60 seconds)
-- **Word Grid**: Timed word puzzle competition (2.5 minutes per player)
+- **Orb Collector**: Real-time competitive collection game (60 seconds, 2-6 players)
+- **Word Grid**: Timed word puzzle competition (2.5 minutes per player, dictionary validated)
+- **Pokemon Card Battle**: Turn-based Pokemon TCG with 3 Pokemon teams (1-2 GOR entry, winner-takes-all)
 - **Token Takedown**: Multiplayer arena battle game
 
 ### ✅ **Blockchain Integration** - FULLY INTEGRATED
@@ -196,6 +197,45 @@ Time bonus: remaining seconds = bonus points
 // 3. Prize Distribution
 Higher score wins → Winner gets 1.8 GOR → Loser gets nothing
 Time management strategy crucial for victory
+```
+
+### **Pokemon Card Battle Game Flow** ✅ NEW
+
+```javascript
+// 1. Room Setup & Payment (2 players, 1-2 GOR entry)
+Player 1 pays entry fee → Creates room with optional password → Shares room ID
+Player 2 pays entry fee → Joins with room ID/password → 5-second countdown → Battle starts
+
+// 2. Turn-Based Pokemon TCG Combat
+Each player gets 3 Pokemon team: Active Pokemon + 2 Bench Pokemon
+Turn-based attacks using Pokemon's signature moves
+HP tracking with real-time visual feedback
+Pokemon switching between active and bench positions
+
+// 3. Modern Gaming UI & UX
+Dark gradient background with glassmorphism design
+Large HP displays: "❤️ HP 60/60" with color-coded progress bars
+Attack buttons: "⚡ Thunder Shock - 20 DMG" with gradients
+Real-time battle log with action history
+Responsive design for mobile and desktop
+
+// 4. Pokemon Teams & Mechanics
+Player 1 Team: Pikachu (Electric), Charmander (Fire), Magnemite (Electric)
+Player 2 Team: Squirtle (Water), Bulbasaur (Grass), Psyduck (Water)
+Each Pokemon has 2 signature attacks with different damage values
+Knocked out Pokemon go to defeated pile, player must switch to bench Pokemon
+Game ends when one player has no remaining Pokemon
+
+// 5. Prize Distribution (Winner-Takes-All)
+Winner gets: (entry_amount × 2) × 0.9 GOR
+Platform fee: (entry_amount × 2) × 0.1 GOR
+Real blockchain transfer to winner's wallet
+Instant cryptocurrency prize distribution
+
+// 6. Integration with Pokemon TCG API
+High-resolution Pokemon card images from pokemontcg.io
+Authentic Pokemon data: names, types, HP values, attack moves
+Classic Pokemon aesthetics with modern gaming enhancements
 ```
 
 ## 🛠️ Technical Stack - OPERATIONAL
