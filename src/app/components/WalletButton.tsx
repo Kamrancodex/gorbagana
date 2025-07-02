@@ -118,11 +118,11 @@ export default function WalletButton() {
     try {
       console.log(`🔗 Attempting to connect to ${walletName} on mobile...`);
 
-      // Select the wallet then initiate connection
+      // Select the wallet first so context updates
       select(selectedWallet.adapter.name);
 
-      // Initiate connection (deeplink opens wallet app on mobile)
-      await connect();
+      // Initiate connection directly on the selected adapter (prevents wrong wallet)
+      await selectedWallet.adapter.connect();
 
       // Show mobile-specific guidance immediately
       setTimeout(() => {
