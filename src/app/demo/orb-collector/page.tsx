@@ -459,6 +459,7 @@ export default function DemoOrbCollectorPage() {
                 onOrbCollect={handleOrbCollect}
                 isFullscreen={isFullscreen}
                 myPlayerId={walletAddress}
+                isActive={gameState.status === "playing"}
               />
             </div>
           </div>
@@ -468,10 +469,7 @@ export default function DemoOrbCollectorPage() {
             <OrbCollectorHUD
               gameState={gameState}
               myPlayer={myPlayer}
-              isFullscreen={isFullscreen}
-              myBalance={myBalance}
               betAmount={betAmount}
-              isDemoMode={true}
             />
           </div>
         </div>
