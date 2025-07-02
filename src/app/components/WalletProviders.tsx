@@ -66,17 +66,17 @@ export function WalletProviders({ children }: WalletProvidersProps) {
     // Mobile-optimized wallet configuration
     if (isMobile) {
       try {
-        // Phantom - best mobile support
-        walletAdapters.push(new PhantomWalletAdapter());
-      } catch (error) {
-        console.log("Phantom mobile wallet not available:", error);
-      }
-
-      try {
-        // Backpack - better for mobile than Solflare
+        // Backpack (prioritize) – deep-link works well on iOS & Android
         walletAdapters.push(new BackpackWalletAdapter());
       } catch (error) {
         console.log("Backpack mobile wallet not available:", error);
+      }
+
+      try {
+        // Phantom – fallback if user doesn't have Backpack
+        walletAdapters.push(new PhantomWalletAdapter());
+      } catch (error) {
+        console.log("Phantom mobile wallet not available:", error);
       }
     } else {
       // Desktop wallet configuration

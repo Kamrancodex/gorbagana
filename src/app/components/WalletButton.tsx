@@ -189,42 +189,46 @@ export default function WalletButton() {
               Select your wallet app:
             </div>
             <div className="flex flex-col gap-2">
-              {wallets.map((walletAdapter) => (
-                <button
-                  key={walletAdapter.adapter.name}
-                  onClick={() =>
-                    handleMobileWalletSelect(walletAdapter.adapter.name)
-                  }
-                  disabled={isConnecting}
-                  className={`
-                    flex items-center justify-center gap-3 px-4 py-3 rounded-xl font-semibold transition-all duration-200
-                    ${
-                      isConnecting
-                        ? "bg-gray-600 cursor-wait opacity-75"
-                        : "bg-gradient-to-r from-purple-600 to-blue-500 hover:scale-105 cursor-pointer"
+              {wallets
+                .filter((wa) =>
+                  ["Backpack", "Phantom"].includes(wa.adapter.name)
+                )
+                .map((walletAdapter) => (
+                  <button
+                    key={walletAdapter.adapter.name}
+                    onClick={() =>
+                      handleMobileWalletSelect(walletAdapter.adapter.name)
                     }
-                    text-white
-                  `}
-                >
-                  <img
-                    src={walletAdapter.adapter.icon}
-                    alt={walletAdapter.adapter.name}
-                    className="w-6 h-6"
-                    onError={(e) => {
-                      e.currentTarget.style.display = "none";
-                    }}
-                  />
-                  {isConnecting &&
-                  wallet?.adapter.name === walletAdapter.adapter.name ? (
-                    <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                      Connecting...
-                    </>
-                  ) : (
-                    <>Connect {walletAdapter.adapter.name}</>
-                  )}
-                </button>
-              ))}
+                    disabled={isConnecting}
+                    className={`
+                      flex items-center justify-center gap-3 px-4 py-3 rounded-xl font-semibold transition-all duration-200
+                      ${
+                        isConnecting
+                          ? "bg-gray-600 cursor-wait opacity-75"
+                          : "bg-gradient-to-r from-purple-600 to-blue-500 hover:scale-105 cursor-pointer"
+                      }
+                      text-white
+                    `}
+                  >
+                    <img
+                      src={walletAdapter.adapter.icon}
+                      alt={walletAdapter.adapter.name}
+                      className="w-6 h-6"
+                      onError={(e) => {
+                        e.currentTarget.style.display = "none";
+                      }}
+                    />
+                    {isConnecting &&
+                    wallet?.adapter.name === walletAdapter.adapter.name ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                        Connecting...
+                      </>
+                    ) : (
+                      <>Connect {walletAdapter.adapter.name}</>
+                    )}
+                  </button>
+                ))}
             </div>
           </div>
         ) : (
