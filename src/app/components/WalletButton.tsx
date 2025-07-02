@@ -99,7 +99,7 @@ export default function WalletButton() {
     setShowWalletPrompt(false);
   };
 
-  // Mobile-specific wallet connection with better guidance
+  // Mobile-specific wallet connection with improved logic
   const handleMobileWalletSelect = async (walletName: string) => {
     if (!isMobile) return;
 
@@ -109,47 +109,50 @@ export default function WalletButton() {
     setIsConnecting(true);
 
     try {
-      // Check if wallet app is likely installed
-      const isPhantom = walletName === "Phantom";
-      const isSolflare = walletName === "Solflare";
+      console.log(`🔗 Attempting to connect to ${walletName} on mobile...`);
 
-      if (isPhantom && !(window as any).phantom?.solana) {
-        alert(
-          `Phantom wallet not detected. Please:\n1. Install Phantom from your app store\n2. Open the Phantom app\n3. Return here and try again`
-        );
-        setIsConnecting(false);
-        return;
-      }
-
-      if (isSolflare && !(window as any).solflare) {
-        alert(
-          `Solflare wallet not detected. Please:\n1. Install Solflare from your app store\n2. Open the Solflare app\n3. Return here and try again`
-        );
-        setIsConnecting(false);
-        return;
-      }
-
-      // Select the wallet
+      // Select the wallet and let the adapter handle the connection
       select(selectedWallet.adapter.name);
 
-      // Show mobile-specific guidance
+      // Show mobile-specific guidance immediately
       setTimeout(() => {
         if (isConnecting && !connected) {
           alert(
-            `🔗 Connecting to ${walletName}...\n\nIf your wallet app opens:\n1. Approve the connection\n2. Return to this page\n\nIf nothing happens:\n1. Open your ${walletName} app manually\n2. Look for connection requests\n3. Return here when done`
+            `🔗 Connecting to ${walletName}...\n\n📱 Mobile Instructions:\n1. Your ${walletName} app should open automatically\n2. Approve the connection request\n3. You'll be redirected back here\n\nIf ${walletName} doesn't open:\n1. Open the ${walletName} app manually\n2. Look for connection requests\n3. Return to this page when done`
           );
         }
-      }, 3000);
+      }, 2000);
     } catch (error: any) {
       setIsConnecting(false);
       console.error("Mobile wallet selection error:", error);
 
-      if (error.message?.includes("User rejected")) {
+      if (
+        error.message?.includes("User rejected") ||
+        error.message?.includes("cancelled")
+      ) {
+        console.log("User cancelled wallet connection");
         return; // User cancelled, don't show error
       }
 
+      // Show helpful error message
+      const isPhantom = walletName === "Phantom";
+      const isBackpack = walletName === "Backpack";
+
+      let appStoreLink = "";
+      if (isPhantom) {
+        appStoreLink = /iPhone|iPad|iPod/i.test(navigator.userAgent)
+          ? "https://apps.apple.com/app/phantom-solana-wallet/id1598432977"
+          : "https://play.google.com/store/apps/details?id=app.phantom";
+      } else if (isBackpack) {
+        appStoreLink = /iPhone|iPad|iPod/i.test(navigator.userAgent)
+          ? "https://apps.apple.com/app/backpack-crypto-wallet/id1635682577"
+          : "https://play.google.com/store/apps/details?id=app.backpack.mobile";
+      }
+
       alert(
-        `Failed to connect to ${walletName}:\n${error.message}\n\nPlease make sure the app is installed and try again.`
+        `❌ Failed to connect to ${walletName}\n\n🔧 Try this:\n1. Install ${walletName} from your app store\n2. Open ${walletName} and create/import a wallet\n3. Return here and try again\n\n${
+          appStoreLink ? `📱 Install: ${appStoreLink}` : ""
+        }\n\nError: ${error.message}`
       );
     }
   };
@@ -364,20 +367,20 @@ export default function WalletButton() {
                 href={
                   isMobile
                     ? /iPhone|iPad|iPod/i.test(navigator.userAgent)
-                      ? "https://apps.apple.com/app/solflare/id1580902717"
-                      : "https://play.google.com/store/apps/details?id=com.solflare.mobile"
-                    : "https://solflare.com/"
+                      ? "https://apps.apple.com/app/backpack-crypto-wallet/id1635682577"
+                      : "https://play.google.com/store/apps/details?id=app.backpack.mobile"
+                    : "https://backpack.app/"
                 }
                 target="_blank"
                 rel="noopener noreferrer"
-                className="block p-3 bg-green-600 hover:bg-green-700 rounded-lg transition-colors"
+                className="block p-3 bg-purple-600 hover:bg-purple-700 rounded-lg transition-colors"
               >
                 <div className="flex items-center">
-                  <span className="text-lg mr-3">🔥</span>
+                  <span className="text-lg mr-3">🎒</span>
                   <div>
-                    <div className="font-semibold text-white">Solflare</div>
-                    <div className="text-sm text-green-200">
-                      {isMobile ? "Great mobile wallet" : "Feature-rich"}
+                    <div className="font-semibold text-white">Backpack</div>
+                    <div className="text-sm text-purple-200">
+                      {isMobile ? "Great mobile wallet" : "Best for Gorbagana"}
                     </div>
                   </div>
                 </div>
@@ -385,17 +388,17 @@ export default function WalletButton() {
 
               {!isMobile && (
                 <a
-                  href="https://backpack.app/"
+                  href="https://solflare.com/"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="block p-3 bg-purple-600 hover:bg-purple-700 rounded-lg transition-colors"
+                  className="block p-3 bg-green-600 hover:bg-green-700 rounded-lg transition-colors"
                 >
                   <div className="flex items-center">
-                    <span className="text-lg mr-3">🎒</span>
+                    <span className="text-lg mr-3">🔥</span>
                     <div>
-                      <div className="font-semibold text-white">Backpack</div>
-                      <div className="text-sm text-purple-200">
-                        Best for Gorbagana
+                      <div className="font-semibold text-white">Solflare</div>
+                      <div className="text-sm text-green-200">
+                        Feature-rich desktop wallet
                       </div>
                     </div>
                   </div>

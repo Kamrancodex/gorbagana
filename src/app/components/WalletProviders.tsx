@@ -66,25 +66,17 @@ export function WalletProviders({ children }: WalletProvidersProps) {
     // Mobile-optimized wallet configuration
     if (isMobile) {
       try {
-        // Phantom with mobile-specific config
-        walletAdapters.push(
-          new PhantomWalletAdapter({
-            network: network,
-          })
-        );
+        // Phantom - best mobile support
+        walletAdapters.push(new PhantomWalletAdapter());
       } catch (error) {
         console.log("Phantom mobile wallet not available:", error);
       }
 
       try {
-        // Solflare mobile
-        walletAdapters.push(
-          new SolflareWalletAdapter({
-            network: network,
-          })
-        );
+        // Backpack - better for mobile than Solflare
+        walletAdapters.push(new BackpackWalletAdapter());
       } catch (error) {
-        console.log("Solflare mobile wallet not available:", error);
+        console.log("Backpack mobile wallet not available:", error);
       }
     } else {
       // Desktop wallet configuration
@@ -148,7 +140,7 @@ export function WalletProviders({ children }: WalletProvidersProps) {
               console.log("Mobile wallet app not installed");
               setTimeout(() => {
                 alert(
-                  "Wallet app not found. Please install Phantom or Solflare from your app store and try again."
+                  "Wallet app not found. Please install Phantom or Backpack from your app store and try again."
                 );
               }, 100);
               return;
