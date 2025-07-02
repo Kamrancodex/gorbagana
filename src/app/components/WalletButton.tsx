@@ -8,43 +8,88 @@ export default function WalletButton() {
   const [mounted, setMounted] = useState(false);
   const [showWalletPrompt, setShowWalletPrompt] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
-  const { wallets, wallet, connected, connect, disconnect } = useWallet();
+  const [connectionAttempts, setConnectionAttempts] = useState(0);
+  const { wallets, select, wallet, connected, connecting, disconnect } =
+    useWallet();
 
-  // Detect mobile device
+  // Enhanced mobile detection
   const isMobile =
     typeof window !== "undefined" &&
-    /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+    (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
       navigator.userAgent
-    );
+    ) ||
+      (window.screen.width <= 768 && "ontouchstart" in window));
 
   // Ensure component only renders on client side to prevent hydration mismatch
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  // Handle mobile wallet connection state
+  // Handle mobile wallet connection state and deep linking
   useEffect(() => {
-    if (wallet && !connected && isConnecting) {
-      // Mobile wallet connection attempt
+    if (isMobile && isConnecting && wallet && !connected) {
+      // Set up mobile connection timeout
       const timeout = setTimeout(() => {
         setIsConnecting(false);
-        if (isMobile && !connected) {
-          alert(
-            "Wallet connection timed out. Please make sure your wallet app is installed and running."
-          );
-        }
-      }, 10000); // 10 second timeout
+        setConnectionAttempts((prev) => prev + 1);
 
-      return () => clearTimeout(timeout);
+        if (connectionAttempts < 2) {
+          alert(
+            `Connection attempt ${
+              connectionAttempts + 1
+            } failed. \n\nTips:\n1. Make sure ${
+              wallet.adapter.name
+            } app is installed\n2. Try opening the wallet app first\n3. Return to this page and try again`
+          );
+        } else {
+          alert(
+            `Multiple connection attempts failed. \n\nPlease:\n1. Restart your ${wallet.adapter.name} app\n2. Check your internet connection\n3. Try again or use a different wallet`
+          );
+          setConnectionAttempts(0);
+        }
+      }, 15000); // 15 second timeout for mobile
+
+      // Handle page visibility change (user returning from wallet app)
+      const handleVisibilityChange = () => {
+        if (!document.hidden && isConnecting) {
+          // User returned to the page, check connection status
+          setTimeout(() => {
+            if (!connected && isConnecting) {
+              setIsConnecting(false);
+              alert(
+                "Connection not completed. Please try again and make sure to approve the connection in your wallet app."
+              );
+            }
+          }, 2000);
+        }
+      };
+
+      document.addEventListener("visibilitychange", handleVisibilityChange);
+
+      return () => {
+        clearTimeout(timeout);
+        document.removeEventListener(
+          "visibilitychange",
+          handleVisibilityChange
+        );
+      };
     }
-  }, [wallet, connected, isConnecting, isMobile]);
+  }, [wallet, connected, isConnecting, isMobile, connectionAttempts]);
 
   // Reset connecting state when connection succeeds
   useEffect(() => {
     if (connected) {
       setIsConnecting(false);
+      setConnectionAttempts(0);
     }
   }, [connected]);
+
+  // Handle wallet selection change
+  useEffect(() => {
+    if (connecting) {
+      setIsConnecting(true);
+    }
+  }, [connecting]);
 
   const handleWalletError = () => {
     setShowWalletPrompt(true);
@@ -54,38 +99,57 @@ export default function WalletButton() {
     setShowWalletPrompt(false);
   };
 
-  // Custom mobile wallet connection handler
-  const handleMobileWalletConnect = async (selectedWallet: any) => {
-    if (!selectedWallet || !isMobile) return;
+  // Mobile-specific wallet connection with better guidance
+  const handleMobileWalletSelect = async (walletName: string) => {
+    if (!isMobile) return;
+
+    const selectedWallet = wallets.find((w) => w.adapter.name === walletName);
+    if (!selectedWallet) return;
 
     setIsConnecting(true);
 
     try {
-      // For mobile, we need to handle the deep link redirect
-      await connect();
+      // Check if wallet app is likely installed
+      const isPhantom = walletName === "Phantom";
+      const isSolflare = walletName === "Solflare";
 
-      // If connection doesn't happen immediately on mobile, show instructions
-      if (!connected) {
-        setTimeout(() => {
-          if (!connected && isConnecting) {
-            const walletName = selectedWallet.adapter?.name || "wallet";
-            alert(
-              `Please open your ${walletName} app and approve the connection request.`
-            );
-          }
-        }, 2000);
-      }
-    } catch (error: any) {
-      setIsConnecting(false);
-      console.error("Mobile wallet connection error:", error);
-
-      if (error.message?.includes("User rejected")) {
-        // User cancelled, don't show error
+      if (isPhantom && !(window as any).phantom?.solana) {
+        alert(
+          `Phantom wallet not detected. Please:\n1. Install Phantom from your app store\n2. Open the Phantom app\n3. Return here and try again`
+        );
+        setIsConnecting(false);
         return;
       }
 
+      if (isSolflare && !(window as any).solflare) {
+        alert(
+          `Solflare wallet not detected. Please:\n1. Install Solflare from your app store\n2. Open the Solflare app\n3. Return here and try again`
+        );
+        setIsConnecting(false);
+        return;
+      }
+
+      // Select the wallet
+      select(selectedWallet.adapter.name);
+
+      // Show mobile-specific guidance
+      setTimeout(() => {
+        if (isConnecting && !connected) {
+          alert(
+            `🔗 Connecting to ${walletName}...\n\nIf your wallet app opens:\n1. Approve the connection\n2. Return to this page\n\nIf nothing happens:\n1. Open your ${walletName} app manually\n2. Look for connection requests\n3. Return here when done`
+          );
+        }
+      }, 3000);
+    } catch (error: any) {
+      setIsConnecting(false);
+      console.error("Mobile wallet selection error:", error);
+
+      if (error.message?.includes("User rejected")) {
+        return; // User cancelled, don't show error
+      }
+
       alert(
-        `Connection failed: ${error.message}. Please make sure your wallet app is installed.`
+        `Failed to connect to ${walletName}:\n${error.message}\n\nPlease make sure the app is installed and try again.`
       );
     }
   };
@@ -105,11 +169,59 @@ export default function WalletButton() {
   return (
     <>
       <div className="wallet-adapter-dropdown">
-        <WalletMultiButton
-          className={`!bg-gradient-to-r !from-purple-600 !to-blue-500 !rounded-xl !px-6 !py-3 !font-bold !text-white hover:!scale-105 !transition-transform !duration-200 ${
-            isConnecting ? "!opacity-75 !cursor-wait" : ""
-          }`}
-        />
+        {isMobile && !connected ? (
+          // Custom mobile wallet selector
+          <div className="space-y-2">
+            <div className="text-center text-sm text-gray-400 mb-2">
+              Select your wallet app:
+            </div>
+            <div className="flex flex-col gap-2">
+              {wallets.map((walletAdapter) => (
+                <button
+                  key={walletAdapter.adapter.name}
+                  onClick={() =>
+                    handleMobileWalletSelect(walletAdapter.adapter.name)
+                  }
+                  disabled={isConnecting}
+                  className={`
+                    flex items-center justify-center gap-3 px-4 py-3 rounded-xl font-semibold transition-all duration-200
+                    ${
+                      isConnecting
+                        ? "bg-gray-600 cursor-wait opacity-75"
+                        : "bg-gradient-to-r from-purple-600 to-blue-500 hover:scale-105 cursor-pointer"
+                    }
+                    text-white
+                  `}
+                >
+                  <img
+                    src={walletAdapter.adapter.icon}
+                    alt={walletAdapter.adapter.name}
+                    className="w-6 h-6"
+                    onError={(e) => {
+                      e.currentTarget.style.display = "none";
+                    }}
+                  />
+                  {isConnecting &&
+                  wallet?.adapter.name === walletAdapter.adapter.name ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      Connecting...
+                    </>
+                  ) : (
+                    <>Connect {walletAdapter.adapter.name}</>
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>
+        ) : (
+          // Standard wallet button for desktop or when connected
+          <WalletMultiButton
+            className={`!bg-gradient-to-r !from-purple-600 !to-blue-500 !rounded-xl !px-6 !py-3 !font-bold !text-white hover:!scale-105 !transition-transform !duration-200 ${
+              isConnecting ? "!opacity-75 !cursor-wait" : ""
+            }`}
+          />
+        )}
 
         {/* Wallet Info */}
         {mounted && (
@@ -303,6 +415,8 @@ export default function WalletButton() {
                   3. Return to this page and click "Connect Wallet"
                   <br />
                   4. Select your wallet and approve connection
+                  <br />
+                  5. You may need to switch between apps during connection
                 </p>
               </div>
             )}

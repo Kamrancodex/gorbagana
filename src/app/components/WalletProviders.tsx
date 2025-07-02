@@ -38,44 +38,80 @@ export function WalletProviders({ children }: WalletProvidersProps) {
     );
   }, []);
 
-  // Detect if we're on mobile for mobile-specific wallet handling
+  // Enhanced mobile detection with additional checks
   const isMobile = useMemo(() => {
     if (typeof window === "undefined") return false;
-    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
-      navigator.userAgent
-    );
+
+    // Check user agent
+    const userAgent =
+      /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+        navigator.userAgent
+      );
+
+    // Check screen size
+    const screenSize =
+      window.screen.width <= 768 || window.screen.height <= 768;
+
+    // Check touch support
+    const touchSupport =
+      "ontouchstart" in window || navigator.maxTouchPoints > 0;
+
+    return userAgent || (screenSize && touchSupport);
   }, []);
 
-  // Configure multiple wallet adapters for better compatibility
+  // Configure wallet adapters with mobile-specific settings
   const wallets = useMemo(() => {
     const walletAdapters = [];
 
-    try {
-      // Primary: Phantom (better mobile support)
-      walletAdapters.push(new PhantomWalletAdapter());
-    } catch (error) {
-      console.log("Phantom wallet not available:", error);
-    }
+    // Mobile-optimized wallet configuration
+    if (isMobile) {
+      try {
+        // Phantom with mobile-specific config
+        walletAdapters.push(
+          new PhantomWalletAdapter({
+            network: network,
+          })
+        );
+      } catch (error) {
+        console.log("Phantom mobile wallet not available:", error);
+      }
 
-    try {
-      // Secondary: Solflare (good mobile support)
-      walletAdapters.push(new SolflareWalletAdapter());
-    } catch (error) {
-      console.log("Solflare wallet not available:", error);
-    }
+      try {
+        // Solflare mobile
+        walletAdapters.push(
+          new SolflareWalletAdapter({
+            network: network,
+          })
+        );
+      } catch (error) {
+        console.log("Solflare mobile wallet not available:", error);
+      }
+    } else {
+      // Desktop wallet configuration
+      try {
+        walletAdapters.push(new PhantomWalletAdapter());
+      } catch (error) {
+        console.log("Phantom wallet not available:", error);
+      }
 
-    try {
-      // Tertiary: Backpack (for Gorbagana when available)
-      walletAdapters.push(new BackpackWalletAdapter());
-    } catch (error) {
-      console.log("Backpack wallet not available:", error);
+      try {
+        walletAdapters.push(new SolflareWalletAdapter());
+      } catch (error) {
+        console.log("Solflare wallet not available:", error);
+      }
+
+      try {
+        walletAdapters.push(new BackpackWalletAdapter());
+      } catch (error) {
+        console.log("Backpack wallet not available:", error);
+      }
     }
 
     console.log(
       `🦊 Configured ${walletAdapters.length} wallet adapters (Mobile: ${isMobile})`
     );
     return walletAdapters;
-  }, [isMobile]);
+  }, [isMobile, network]);
 
   // Show loading state during hydration
   if (!mounted) {
@@ -93,28 +129,58 @@ export function WalletProviders({ children }: WalletProvidersProps) {
     <ConnectionProvider endpoint={endpoint}>
       <WalletProvider
         wallets={wallets}
-        autoConnect={isMobile} // Enable auto-connect on mobile for better UX
+        autoConnect={false} // Always false to prevent issues, let users manually connect
         onError={(error) => {
           console.warn("Wallet error:", error);
 
-          // Handle mobile-specific wallet errors
-          if (isMobile && error.message?.includes("User rejected")) {
-            console.log("Mobile user cancelled wallet connection");
-            return; // Don't show error for user cancellation
+          // Enhanced mobile error handling
+          if (isMobile) {
+            // Handle common mobile wallet errors
+            if (error.message?.includes("User rejected")) {
+              console.log("Mobile user cancelled wallet connection");
+              return; // Don't show error for user cancellation
+            }
+
+            if (
+              error.message?.includes("Wallet not found") ||
+              error.name === "WalletNotFoundError"
+            ) {
+              console.log("Mobile wallet app not installed");
+              setTimeout(() => {
+                alert(
+                  "Wallet app not found. Please install Phantom or Solflare from your app store and try again."
+                );
+              }, 100);
+              return;
+            }
+
+            if (
+              error.message?.includes("timeout") ||
+              error.message?.includes("Failed to fetch")
+            ) {
+              console.log("Mobile wallet connection timeout");
+              setTimeout(() => {
+                alert(
+                  "Connection timed out. Please make sure your wallet app is running and try again."
+                );
+              }, 100);
+              return;
+            }
           }
 
           // Don't throw for wallet not ready errors
           if (
             error.name !== "WalletNotReadyError" &&
-            error.name !== "WalletNotSelectedError"
+            error.name !== "WalletNotSelectedError" &&
+            error.name !== "WalletNotFoundError"
           ) {
             console.error("Critical wallet error:", error);
 
-            // Show mobile-friendly error message
+            // Show user-friendly error message
             if (isMobile) {
               setTimeout(() => {
                 alert(
-                  `Wallet connection failed. Please ensure your wallet app is installed and try again.\n\nError: ${error.message}`
+                  `Wallet connection failed. Please try:\n\n1. Make sure your wallet app is installed\n2. Open the wallet app first\n3. Try connecting again\n\nError: ${error.message}`
                 );
               }, 100);
             }
