@@ -111,7 +111,7 @@ export default function OrbCollectorPage() {
 
   // Socket event handlers
   useEffect(() => {
-    const walletAddress = isMockMode
+    const walletAddress = isMockMode()
       ? getMockWalletAddress()
       : publicKey?.toBase58();
     if (!socket || !walletAddress) return;
@@ -137,18 +137,68 @@ export default function OrbCollectorPage() {
     };
 
     const handleGameEnd = (results: any) => {
+      console.log("🏁 Orb collector game ended:", results);
+
+      // Store game results in localStorage for results page
+      const gameResults = {
+        gameType: "orb-collector",
+        gameId: results.gameId || gameState.gameId,
+        leaderboard: results.leaderboard || [],
+        totalEscrowed: results.totalEscrowed || 0,
+        playerWallet: walletAddress,
+        timestamp: Date.now(),
+      };
+
+      try {
+        localStorage.setItem(
+          "orbCollectorResults",
+          JSON.stringify(gameResults)
+        );
+        localStorage.setItem("lastGameType", "orb-collector");
+        console.log("📝 Stored orb collector results:", gameResults);
+      } catch (error) {
+        console.error("Failed to store game results:", error);
+      }
+
       // Navigate to results page with game data
-      router.push(`/results?game=orb-collector&gameId=${gameState.gameId}`);
+      router.push(`/results?game=orb-collector&gameId=${gameResults.gameId}`);
     };
 
-    socket.on("orbGameState", handleGameState);
-    socket.on("orbCollected", handleOrbCollected);
+    // Use different event names based on real wallet mode
+    const gameStateEvent = isMockMode() ? "orbGameState" : "realOrbGameState";
+    const orbCollectedEvent = isMockMode()
+      ? "orbCollected"
+      : "realOrbCollected";
+
+    const handlePaymentError = (error: string) => {
+      setPaymentStatus("failed");
+      console.error("❌ Orb collector payment error:", error);
+      alert(`Payment failed: ${error}`);
+    };
+
+    const handleError = (data: { message: string }) => {
+      console.error("❌ Orb collector error:", data.message);
+      alert(`Error: ${data.message}`);
+    };
+
+    socket.on(gameStateEvent, handleGameState);
+    socket.on(orbCollectedEvent, handleOrbCollected);
     socket.on("gameEnd", handleGameEnd);
 
+    if (!isMockMode()) {
+      socket.on("paymentError", handlePaymentError);
+      socket.on("error", handleError);
+    }
+
     return () => {
-      socket.off("orbGameState", handleGameState);
-      socket.off("orbCollected", handleOrbCollected);
+      socket.off(gameStateEvent, handleGameState);
+      socket.off(orbCollectedEvent, handleOrbCollected);
       socket.off("gameEnd", handleGameEnd);
+
+      if (!isMockMode()) {
+        socket.off("paymentError", handlePaymentError);
+        socket.off("error", handleError);
+      }
     };
   }, [socket, publicKey, isMockMode, gameStarted, gameState.gameId, router]);
 
@@ -160,7 +210,7 @@ export default function OrbCollectorPage() {
   }) => {
     setPlayerPosition(newPosition);
 
-    const walletAddress = isMockMode
+    const walletAddress = isMockMode()
       ? getMockWalletAddress()
       : publicKey?.toBase58();
     if (socket && walletAddress) {
@@ -189,11 +239,12 @@ export default function OrbCollectorPage() {
 
   // Handle orb collection
   const handleOrbCollect = (orbId: string) => {
-    const walletAddress = isMockMode
+    const walletAddress = isMockMode()
       ? getMockWalletAddress()
       : publicKey?.toBase58();
     if (socket && walletAddress) {
-      socket.emit("collectOrb", {
+      const collectEvent = isMockMode() ? "collectOrb" : "collectRealOrb";
+      socket.emit(collectEvent, {
         gameId: gameState.gameId,
         playerId: walletAddress,
         orbId: orbId,
@@ -234,7 +285,7 @@ export default function OrbCollectorPage() {
 
   // Join game after payment
   const handleJoinGame = async () => {
-    const walletAddress = isMockMode
+    const walletAddress = isMockMode()
       ? getMockWalletAddress()
       : publicKey?.toBase58();
     if (!walletAddress || !socket) return;
@@ -248,7 +299,7 @@ export default function OrbCollectorPage() {
         error?: string;
       };
 
-      if (isMockMode) {
+      if (isMockMode()) {
         // Use mock payment system
         const mockResult = payMockEntryFee(
           betAmount,
@@ -274,23 +325,29 @@ export default function OrbCollectorPage() {
         setPaymentStatus("success");
 
         // Update balance
-        if (isMockMode) {
+        if (isMockMode()) {
           setMyBalance(getMockBalance());
         }
 
-        // Join the game room
-        console.log(`🔗 [${isMockMode ? "MOCK" : "REAL"}] Joining orb game:`, {
-          walletAddress: walletAddress,
-          betAmount: betAmount,
-          nickname: `${walletAddress.slice(0, 6)}...`,
-          isMockMode,
-          socketConnected: socket.connected,
-        });
+        // Join the game room - use different events for real vs mock
+        console.log(
+          `🔗 [${isMockMode() ? "MOCK" : "REAL"}] Joining orb game:`,
+          {
+            walletAddress: walletAddress,
+            betAmount: betAmount,
+            nickname: `${walletAddress.slice(0, 6)}...`,
+            isMockMode: isMockMode(),
+            socketConnected: socket.connected,
+          }
+        );
 
-        socket.emit("joinOrbGame", {
-          walletAddress: walletAddress,
+        const joinEvent = isMockMode() ? "joinOrbGame" : "joinRealOrbGame";
+        socket.emit(joinEvent, {
+          playerId: walletAddress,
+          playerNickname: `${walletAddress.slice(0, 6)}...`,
           betAmount: betAmount,
-          nickname: `${walletAddress.slice(0, 6)}...`,
+          ...(!isMockMode() ? { txSignature: paymentResult.txSignature } : {}),
+          ...(isMockMode() ? { walletAddress: walletAddress } : {}),
         });
       } else {
         setPaymentStatus("failed");
@@ -342,7 +399,7 @@ export default function OrbCollectorPage() {
   };
 
   // Check if player is in game
-  const walletAddress = isMockMode
+  const walletAddress = isMockMode()
     ? getMockWalletAddress()
     : publicKey?.toBase58();
   const myPlayer = gameState.players.find(
@@ -372,63 +429,67 @@ export default function OrbCollectorPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-pink-900">
       {/* Header */}
-      <div className="p-4 bg-black/50">
-        <div className="flex justify-between items-center max-w-7xl mx-auto">
-          <div className="flex items-center space-x-4">
+      <div className="p-2 md:p-4 bg-black/50">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center max-w-7xl mx-auto gap-2 md:gap-4">
+          <div className="flex items-center space-x-2 md:space-x-4">
             <button
-              onClick={() => router.push(isMockMode ? "/mock-games" : "/games")}
-              className="text-blue-400 hover:text-blue-300 text-lg"
+              onClick={() =>
+                router.push(isMockMode() ? "/mock-games" : "/games")
+              }
+              className="text-blue-400 hover:text-blue-300 text-sm md:text-lg"
             >
               ← Back to Games
             </button>
             <div>
-              <h1 className="text-3xl font-bold text-white">
+              <h1 className="text-xl md:text-3xl font-bold text-white">
                 🔮 Neon Orb Collector 3D
               </h1>
-              {isMockMode && (
-                <div className="text-sm text-orange-400 font-bold flex items-center gap-1">
+              {isMockMode() && (
+                <div className="text-xs md:text-sm text-orange-400 font-bold flex items-center gap-1">
                   <span>🎭</span>
                   <span>DEMO MODE</span>
                 </div>
               )}
             </div>
           </div>
-          <div className="flex items-center space-x-4">
-            <div className="text-white text-right">
-              <div className="text-sm text-gray-300">Balance</div>
-              <div className="text-lg font-bold text-yellow-400">
-                💰 {myBalance.toFixed(2)} GOR{isMockMode ? " (Demo)" : ""}
+          <div className="flex flex-row md:flex-row items-center space-x-2 md:space-x-4 w-full md:w-auto justify-between md:justify-end">
+            <div className="text-white text-center md:text-right">
+              <div className="text-xs md:text-sm text-gray-300">Balance</div>
+              <div className="text-sm md:text-lg font-bold text-yellow-400">
+                💰 {myBalance.toFixed(2)} GOR{isMockMode() ? " (Demo)" : ""}
               </div>
             </div>
-            <div className="text-white text-right">
-              <div className="text-sm text-gray-300">Bet Amount</div>
-              <div className="text-lg font-bold text-green-400">
-                🎯 {betAmount} GOR{isMockMode ? " (Demo)" : ""}
+            <div className="text-white text-center md:text-right">
+              <div className="text-xs md:text-sm text-gray-300">Bet Amount</div>
+              <div className="text-sm md:text-lg font-bold text-green-400">
+                🎯 {betAmount} GOR{isMockMode() ? " (Demo)" : ""}
               </div>
             </div>
             <button
               onClick={toggleFullscreen}
-              className="bg-purple-500 hover:bg-purple-400 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+              className="bg-purple-500 hover:bg-purple-400 text-white px-2 md:px-4 py-1 md:py-2 rounded-lg text-xs md:text-sm font-medium transition-colors"
               title={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
             >
-              {isFullscreen ? "🔲 Exit" : "⛶ Fullscreen"}
+              {isFullscreen ? "🔲 Exit" : "⛶ Full"}
             </button>
           </div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto p-4">
+      <div className="max-w-7xl mx-auto p-2 md:p-4">
         {/* Game Instructions Modal */}
         {showInstructions && (
-          <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50">
-            <div className="bg-gradient-to-br from-purple-800 to-blue-800 p-8 rounded-2xl max-w-md mx-4 border border-purple-400">
-              <h2 className="text-2xl font-bold text-white mb-4 text-center">
+          <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+            <div className="bg-gradient-to-br from-purple-800 to-blue-800 p-4 md:p-8 rounded-2xl max-w-md mx-4 border border-purple-400 w-full">
+              <h2 className="text-xl md:text-2xl font-bold text-white mb-4 text-center">
                 🔮 How to Play
               </h2>
-              <div className="text-white space-y-3 text-sm">
+              <div className="text-white space-y-3 text-xs md:text-sm">
                 <div className="flex items-center space-x-2">
                   <span className="text-blue-400">⚡</span>
-                  <span>Use WASD keys to move around the arena</span>
+                  <span>
+                    Use WASD keys or touch controls to move around the arena
+                  </span>
                 </div>
                 <div className="flex items-center space-x-2">
                   <span className="text-green-400">💎</span>
@@ -462,30 +523,30 @@ export default function OrbCollectorPage() {
         )}
 
         {/* Game Status */}
-        <div className="mb-6 text-center">
+        <div className="mb-4 md:mb-6 text-center">
           {gameState.status === "waiting" && !isInGame && (
-            <div className="bg-purple-500/20 p-6 rounded-xl border border-purple-400">
-              <h2 className="text-2xl font-bold text-white mb-4">
+            <div className="bg-purple-500/20 p-4 md:p-6 rounded-xl border border-purple-400">
+              <h2 className="text-lg md:text-2xl font-bold text-white mb-4">
                 🎮 Ready to Enter the Neon Arena?
               </h2>
-              <p className="text-gray-300 mb-4">
-                Entry Fee: {betAmount} GOR{isMockMode ? " (Demo)" : ""} | Prize
-                Pool: Distributed to top players
-                {isMockMode ? " (Virtual rewards in demo mode)" : ""}
+              <p className="text-gray-300 mb-4 text-sm md:text-base">
+                Entry Fee: {betAmount} GOR{isMockMode() ? " (Demo)" : ""} |
+                Prize Pool: Distributed to top players
+                {isMockMode() ? " (Virtual rewards in demo mode)" : ""}
               </p>
 
               {paymentStatus === "processing" && (
-                <div className="text-yellow-400 font-bold">
+                <div className="text-yellow-400 font-bold text-sm md:text-base">
                   Processing payment... Please wait
                 </div>
               )}
 
               {paymentStatus === "failed" && (
                 <div className="space-y-3">
-                  <div className="text-red-400 font-bold">
+                  <div className="text-red-400 font-bold text-sm md:text-base">
                     Payment confirmation failed.
                   </div>
-                  <div className="text-yellow-300 text-sm">
+                  <div className="text-yellow-300 text-xs md:text-sm">
                     ⚠️ If your balance decreased, the payment may have succeeded
                     despite the error.
                   </div>
@@ -502,11 +563,11 @@ export default function OrbCollectorPage() {
                 <button
                   onClick={handleJoinGame}
                   disabled={myBalance < betAmount}
-                  className="bg-gradient-to-r from-purple-500 to-blue-500 text-white px-8 py-3 rounded-lg font-bold hover:from-purple-400 hover:to-blue-400 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="bg-gradient-to-r from-purple-500 to-blue-500 text-white px-6 md:px-8 py-2 md:py-3 rounded-lg font-bold hover:from-purple-400 hover:to-blue-400 transition-all disabled:opacity-50 disabled:cursor-not-allowed text-sm md:text-base"
                 >
                   {myBalance < betAmount
                     ? "Insufficient Balance"
-                    : `Join Game (${betAmount} gGOR)`}
+                    : `Join Game (${betAmount} GOR)`}
                 </button>
               )}
             </div>
@@ -514,10 +575,10 @@ export default function OrbCollectorPage() {
 
           {gameState.status === "waiting" && isInGame && (
             <div className="bg-blue-500/20 p-4 rounded-xl border border-blue-400">
-              <div className="text-white font-bold text-lg">
+              <div className="text-white font-bold text-base md:text-lg">
                 🎯 Waiting for more players... ({gameState.players.length}/6)
               </div>
-              <div className="text-gray-300 mt-2">
+              <div className="text-gray-300 mt-2 text-sm md:text-base">
                 Game starts when we have enough players!
               </div>
             </div>
@@ -525,31 +586,37 @@ export default function OrbCollectorPage() {
 
           {gameState.status === "countdown" && (
             <div className="bg-yellow-500/20 p-4 rounded-xl border border-yellow-400">
-              <div className="text-yellow-400 font-bold text-2xl">
+              <div className="text-yellow-400 font-bold text-xl md:text-2xl">
                 🚀 Starting in {gameState.countdownTime}...
               </div>
-              <div className="text-white">Get ready to collect orbs!</div>
+              <div className="text-white text-sm md:text-base">
+                Get ready to collect orbs!
+              </div>
             </div>
           )}
 
           {gameState.status === "playing" && (
             <div className="bg-green-500/20 p-4 rounded-xl border border-green-400">
-              <div className="text-green-400 font-bold text-2xl">
+              <div className="text-green-400 font-bold text-xl md:text-2xl">
                 ⏰ {gameState.timeRemaining}s remaining
               </div>
-              <div className="text-white">Collect orbs to score points!</div>
+              <div className="text-white text-sm md:text-base">
+                Collect orbs to score points!
+              </div>
             </div>
           )}
         </div>
 
         {/* Game Arena */}
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 md:gap-6">
           {/* 3D Game Scene */}
           <div className="lg:col-span-3">
             <div
               ref={gameContainerRef}
               className={`bg-black rounded-xl overflow-hidden border border-purple-400 focus:outline-none focus:ring-2 focus:ring-purple-500 ${
-                isFullscreen ? "fixed inset-0 z-50 !rounded-none" : ""
+                isFullscreen
+                  ? "fixed inset-0 z-50 !rounded-none"
+                  : "h-40 md:h-96"
               }`}
               tabIndex={0}
               onClick={() => gameContainerRef.current?.focus()}

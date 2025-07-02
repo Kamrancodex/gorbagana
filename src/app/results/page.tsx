@@ -1,7 +1,7 @@
 "use client";
 
 import { useWallet } from "@solana/wallet-adapter-react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useGameWebSocket } from "../lib/websocket";
 import {
@@ -17,11 +17,29 @@ interface GameResult {
   isWinner: boolean;
 }
 
+interface OrbCollectorResult {
+  gameType: string;
+  gameId: string;
+  leaderboard: Array<{
+    id: string;
+    walletAddress: string;
+    score: number;
+    rank: number;
+    nickname?: string;
+  }>;
+  totalEscrowed: number;
+  playerWallet: string;
+  timestamp: number;
+}
+
 export default function ResultsPage() {
   const { publicKey, connected } = useWallet();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { gameState } = useGameWebSocket();
   const [gameResult, setGameResult] = useState<GameResult | null>(null);
+  const [orbCollectorResult, setOrbCollectorResult] =
+    useState<OrbCollectorResult | null>(null);
   const [showConfetti, setShowConfetti] = useState(false);
   const [results, setResults] = useState<GameResult[]>([]);
   const [playerBalance, setPlayerBalance] = useState<number | null>(null);
@@ -34,7 +52,38 @@ export default function ResultsPage() {
       return;
     }
 
-    if (gameState && gameState.gameStatus === "finished") {
+    // Check if this is an orb collector game from URL params
+    const gameParam = searchParams.get("game");
+    const gameIdParam = searchParams.get("gameId");
+
+    if (gameParam === "orb-collector") {
+      // Load orb collector results from localStorage
+      try {
+        const savedOrbResults = localStorage.getItem("orbCollectorResults");
+        if (savedOrbResults) {
+          const orbResults: OrbCollectorResult = JSON.parse(savedOrbResults);
+          setOrbCollectorResult(orbResults);
+          setGameType("orb-collector");
+
+          // Check if current player won
+          const playerWallet = publicKey?.toBase58();
+          if (playerWallet && orbResults.leaderboard.length > 0) {
+            const playerResult = orbResults.leaderboard.find(
+              (p) => p.walletAddress === playerWallet
+            );
+            const isWinner = playerResult?.rank === 1;
+
+            if (isWinner) {
+              setShowConfetti(true);
+              setTimeout(() => setShowConfetti(false), 5000);
+            }
+          }
+        }
+      } catch (error) {
+        console.error("Failed to load orb collector results:", error);
+      }
+    } else if (gameState && gameState.gameStatus === "finished") {
+      // Handle other game types (existing logic)
       const playerData = gameState.players.find((p) => p.isYou);
       if (playerData) {
         const sortedPlayers = [...gameState.players].sort(
@@ -73,7 +122,7 @@ export default function ResultsPage() {
       }
     }
 
-    // Get results from localStorage
+    // Get results from localStorage for other games
     const savedResults = localStorage.getItem("gameResults");
     const savedGameType = localStorage.getItem("lastGameType");
 
@@ -81,7 +130,7 @@ export default function ResultsPage() {
       setResults(JSON.parse(savedResults));
     }
 
-    if (savedGameType) {
+    if (savedGameType && gameParam !== "orb-collector") {
       setGameType(savedGameType);
     }
 
@@ -89,7 +138,7 @@ export default function ResultsPage() {
     if (publicKey) {
       loadBalance();
     }
-  }, [connected, gameState, router, publicKey]);
+  }, [connected, gameState, router, publicKey, searchParams]);
 
   const loadBalance = async () => {
     if (!publicKey) return;
@@ -123,14 +172,18 @@ export default function ResultsPage() {
   };
 
   const handlePlayAgain = () => {
-    router.push("/lobby");
+    if (gameType === "orb-collector") {
+      router.push("/orb-collector?bet=1&real=true");
+    } else {
+      router.push("/lobby");
+    }
   };
 
   const handleGoHome = () => {
     router.push("/");
   };
 
-  if (!connected || !gameResult) {
+  if (!connected || (!gameResult && !orbCollectorResult)) {
     return (
       <div className="min-h-screen bg-gray-900 flex items-center justify-center">
         <div className="text-center">
@@ -195,7 +248,7 @@ export default function ResultsPage() {
           </div>
         )}
 
-        {/* Player Result Card */}
+        {/* Player Result Card - Regular Games */}
         {gameResult && (
           <div className="bg-black/30 backdrop-blur-md rounded-xl p-6 mb-8 border border-white/10">
             <div className="text-center">
@@ -255,63 +308,170 @@ export default function ResultsPage() {
           </div>
         )}
 
+        {/* Orb Collector Result Card */}
+        {orbCollectorResult && (
+          <div className="bg-black/30 backdrop-blur-md rounded-xl p-6 mb-8 border border-white/10">
+            <div className="text-center">
+              <div className="text-6xl mb-4">🔮</div>
+              <h2 className="text-3xl font-bold mb-2 text-purple-400">
+                Orb Collector Complete!
+              </h2>
+              {orbCollectorResult.leaderboard.length > 0 && (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+                  <div className="bg-white/5 rounded-lg p-4">
+                    <div className="text-gray-400 text-sm">Your Position</div>
+                    <div className="text-2xl font-bold text-yellow-400">
+                      #
+                      {orbCollectorResult.leaderboard.find(
+                        (p) => p.walletAddress === publicKey?.toBase58()
+                      )?.rank || "N/A"}
+                    </div>
+                  </div>
+                  <div className="bg-white/5 rounded-lg p-4">
+                    <div className="text-gray-400 text-sm">Orbs Collected</div>
+                    <div className="text-2xl font-bold text-green-400">
+                      {orbCollectorResult.leaderboard.find(
+                        (p) => p.walletAddress === publicKey?.toBase58()
+                      )?.score || 0}
+                    </div>
+                  </div>
+                  <div className="bg-white/5 rounded-lg p-4">
+                    <div className="text-gray-400 text-sm">Prize Pool</div>
+                    <div className="text-2xl font-bold text-pink-400">
+                      {orbCollectorResult.totalEscrowed.toFixed(2)} GOR
+                    </div>
+                  </div>
+                </div>
+              )}
+              {orbCollectorResult.leaderboard.find(
+                (p) => p.walletAddress === publicKey?.toBase58()
+              )?.rank === 1 && (
+                <div className="mt-4 p-4 bg-green-500/10 border border-green-500/30 rounded-lg">
+                  <p className="text-green-300 font-semibold">
+                    🎉 Congratulations! You won{" "}
+                    {(orbCollectorResult.totalEscrowed * 0.9).toFixed(2)} GOR!
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Leaderboard */}
         <div className="bg-black/30 backdrop-blur-md rounded-xl p-6 mb-8 border border-white/10">
           <h3 className="text-2xl font-bold text-white mb-6 text-center">
             🏆 Final Leaderboard
           </h3>
           <div className="space-y-3">
-            {gameState?.players
-              .sort((a, b) => b.tokens - a.tokens)
-              .map((player, index) => (
-                <div
-                  key={player.id}
-                  className={`flex items-center justify-between p-4 rounded-lg ${
-                    player.isYou
-                      ? "bg-blue-500/20 border border-blue-500/50"
-                      : "bg-white/5"
-                  }`}
-                >
-                  <div className="flex items-center gap-4">
-                    <div className="text-2xl">
-                      {index === 0
-                        ? "🥇"
-                        : index === 1
-                        ? "🥈"
-                        : index === 2
-                        ? "🥉"
-                        : `#${index + 1}`}
-                    </div>
-                    <div>
-                      <div
-                        className={`font-bold ${
-                          player.isYou ? "text-blue-400" : "text-gray-400"
-                        }`}
-                      >
-                        {player.isYou ? "You" : `Player ${index + 1}`}
-                      </div>
-                      <div className="text-sm text-gray-400">
-                        {player.isYou
-                          ? publicKey?.toBase58().slice(0, 8) +
-                            "..." +
-                            publicKey?.toBase58().slice(-4)
-                          : ""}
-                      </div>
-                    </div>
+            {/* Orb Collector Leaderboard */}
+            {orbCollectorResult?.leaderboard.map((player, index) => (
+              <div
+                key={player.id}
+                className={`flex items-center justify-between p-4 rounded-lg ${
+                  player.walletAddress === publicKey?.toBase58()
+                    ? "bg-blue-500/20 border border-blue-500/50"
+                    : "bg-white/5"
+                }`}
+              >
+                <div className="flex items-center gap-4">
+                  <div className="text-2xl">
+                    {index === 0
+                      ? "🥇"
+                      : index === 1
+                      ? "🥈"
+                      : index === 2
+                      ? "🥉"
+                      : `#${index + 1}`}
                   </div>
-                  <div className="text-right">
-                    <div className="text-lg font-bold text-white">
-                      {player.tokens} gGOR
+                  <div>
+                    <div
+                      className={`font-bold ${
+                        player.walletAddress === publicKey?.toBase58()
+                          ? "text-blue-400"
+                          : "text-gray-400"
+                      }`}
+                    >
+                      {player.walletAddress === publicKey?.toBase58()
+                        ? "You"
+                        : player.nickname || `Player ${index + 1}`}
                     </div>
-                    {index < 3 && (
-                      <div className="text-sm text-green-400">
-                        +{index === 0 ? "50%" : index === 1 ? "30%" : "20%"}{" "}
-                        pool
-                      </div>
-                    )}
+                    <div className="text-sm text-gray-400">
+                      {player.walletAddress === publicKey?.toBase58()
+                        ? publicKey?.toBase58().slice(0, 8) +
+                          "..." +
+                          publicKey?.toBase58().slice(-4)
+                        : player.walletAddress.slice(0, 8) +
+                          "..." +
+                          player.walletAddress.slice(-4)}
+                    </div>
                   </div>
                 </div>
-              ))}
+                <div className="text-right">
+                  <div className="text-lg font-bold text-white">
+                    {player.score} orbs
+                  </div>
+                  {index === 0 && (
+                    <div className="text-sm text-green-400">
+                      Winner takes all!
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+
+            {/* Regular Game Leaderboard */}
+            {!orbCollectorResult &&
+              gameState?.players
+                .sort((a, b) => b.tokens - a.tokens)
+                .map((player, index) => (
+                  <div
+                    key={player.id}
+                    className={`flex items-center justify-between p-4 rounded-lg ${
+                      player.isYou
+                        ? "bg-blue-500/20 border border-blue-500/50"
+                        : "bg-white/5"
+                    }`}
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className="text-2xl">
+                        {index === 0
+                          ? "🥇"
+                          : index === 1
+                          ? "🥈"
+                          : index === 2
+                          ? "🥉"
+                          : `#${index + 1}`}
+                      </div>
+                      <div>
+                        <div
+                          className={`font-bold ${
+                            player.isYou ? "text-blue-400" : "text-gray-400"
+                          }`}
+                        >
+                          {player.isYou ? "You" : `Player ${index + 1}`}
+                        </div>
+                        <div className="text-sm text-gray-400">
+                          {player.isYou
+                            ? publicKey?.toBase58().slice(0, 8) +
+                              "..." +
+                              publicKey?.toBase58().slice(-4)
+                            : ""}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-lg font-bold text-white">
+                        {player.tokens} gGOR
+                      </div>
+                      {index < 3 && (
+                        <div className="text-sm text-green-400">
+                          +{index === 0 ? "50%" : index === 1 ? "30%" : "20%"}{" "}
+                          pool
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
           </div>
         </div>
 
@@ -343,9 +503,14 @@ export default function ResultsPage() {
             Connected: {publicKey?.toBase58().slice(0, 8)}...
             {publicKey?.toBase58().slice(-4)}
           </p>
-          {gameResult.reward > 0 && (
+          {gameResult?.reward && gameResult.reward > 0 && (
             <p className="mt-2 text-green-400">
               Rewards will be automatically transferred to your wallet
+            </p>
+          )}
+          {orbCollectorResult && (
+            <p className="mt-2 text-green-400">
+              Prize distribution completed via blockchain transfer
             </p>
           )}
         </div>

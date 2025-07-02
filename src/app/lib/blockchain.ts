@@ -550,7 +550,19 @@ export const updateMockBalance = (walletAddress: string, amount: number) => {
 // Development mode helpers
 export const isDevMode = () => {
   // Check if we're in development mode
-  // Mock mode if no platform wallet is configured OR if MOCK_MODE is explicitly set
+  if (typeof window !== "undefined") {
+    // Browser environment - safe frontend detection
+    const urlParams = new URLSearchParams(window.location.search);
+    const isMockFromUrl = urlParams.get("mock") === "true";
+
+    // Check for explicit production mode flag (safe for frontend)
+    const isProductionMode = process.env.NEXT_PUBLIC_PRODUCTION_MODE === "true";
+
+    // Default to production mode (real blockchain) unless explicitly in mock mode
+    return isMockFromUrl && !isProductionMode;
+  }
+
+  // Server environment - check if platform wallet is configured
   return !process.env.PLATFORM_PRIVATE_KEY || process.env.MOCK_MODE === "true";
 };
 

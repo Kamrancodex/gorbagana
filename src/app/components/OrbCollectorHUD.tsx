@@ -96,19 +96,19 @@ export default function OrbCollectorHUD({
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-2 md:space-y-4">
       {/* Game Timer */}
       <div
-        className={`bg-gradient-to-br from-gray-800 to-gray-900 p-4 rounded-xl border-2 transition-all duration-300 ${
+        className={`bg-gradient-to-br from-gray-800 to-gray-900 p-3 md:p-4 rounded-xl border-2 transition-all duration-300 ${
           pulseActive ? "border-red-500 animate-pulse" : "border-purple-400"
         }`}
       >
         <div className="text-center">
-          <div className="text-gray-300 text-sm font-medium">
+          <div className="text-gray-300 text-xs md:text-sm font-medium">
             Time Remaining
           </div>
           <div
-            className={`text-3xl font-bold transition-colors ${
+            className={`text-2xl md:text-3xl font-bold transition-colors ${
               gameState.timeRemaining <= 10 ? "text-red-400" : "text-white"
             }`}
           >
@@ -117,7 +117,7 @@ export default function OrbCollectorHUD({
               : "--:--"}
           </div>
           {gameState.status === "countdown" && (
-            <div className="text-yellow-400 text-xl font-bold animate-bounce">
+            <div className="text-yellow-400 text-lg md:text-xl font-bold animate-bounce">
               Starting in {gameState.countdownTime}...
             </div>
           )}
@@ -126,30 +126,32 @@ export default function OrbCollectorHUD({
 
       {/* My Stats */}
       {myPlayer && (
-        <div className="bg-gradient-to-br from-blue-800/50 to-purple-800/50 p-4 rounded-xl border border-blue-400">
-          <h3 className="text-white font-bold text-lg mb-3">Your Stats</h3>
-          <div className="space-y-2">
+        <div className="bg-gradient-to-br from-blue-800/50 to-purple-800/50 p-3 md:p-4 rounded-xl border border-blue-400">
+          <h3 className="text-white font-bold text-base md:text-lg mb-2 md:mb-3">
+            Your Stats
+          </h3>
+          <div className="space-y-1 md:space-y-2">
             <div className="flex justify-between items-center">
-              <span className="text-gray-300">Score:</span>
-              <span className="text-yellow-400 font-bold text-xl">
+              <span className="text-gray-300 text-sm">Score:</span>
+              <span className="text-yellow-400 font-bold text-lg md:text-xl">
                 {myPlayer.score} pts
               </span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-gray-300">Rank:</span>
+              <span className="text-gray-300 text-sm">Rank:</span>
               <span className="text-green-400 font-bold">
                 #{getPlayerRank() || "--"}
               </span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-gray-300">Bet:</span>
-              <span className="text-blue-400 font-bold">{betAmount} gGOR</span>
+              <span className="text-gray-300 text-sm">Bet:</span>
+              <span className="text-blue-400 font-bold">{betAmount} GOR</span>
             </div>
             {getMyPotentialWinnings() > 0 && (
-              <div className="flex justify-between items-center border-t border-gray-600 pt-2 mt-2">
-                <span className="text-gray-300">Potential Win:</span>
-                <span className="text-green-400 font-bold">
-                  {getMyPotentialWinnings().toFixed(2)} gGOR
+              <div className="flex justify-between items-center border-t border-gray-600 pt-1 md:pt-2 mt-1 md:mt-2">
+                <span className="text-gray-300 text-sm">Potential Win:</span>
+                <span className="text-green-400 font-bold text-sm">
+                  {getMyPotentialWinnings().toFixed(2)} GOR
                 </span>
               </div>
             )}
@@ -158,29 +160,29 @@ export default function OrbCollectorHUD({
       )}
 
       {/* Live Leaderboard */}
-      <div className="bg-gradient-to-br from-gray-800 to-gray-900 p-4 rounded-xl border border-purple-400">
-        <h3 className="text-white font-bold text-lg mb-3 flex items-center">
+      <div className="bg-gradient-to-br from-gray-800 to-gray-900 p-3 md:p-4 rounded-xl border border-purple-400">
+        <h3 className="text-white font-bold text-base md:text-lg mb-2 md:mb-3 flex items-center">
           🏆 Live Leaderboard
-          <span className="ml-2 text-sm text-gray-400">
+          <span className="ml-2 text-xs md:text-sm text-gray-400">
             ({gameState.players.length}/6)
           </span>
         </h3>
 
-        <div className="space-y-2 max-h-48 overflow-y-auto">
+        <div className="space-y-1 md:space-y-2 max-h-32 md:max-h-48 overflow-y-auto">
           {[...gameState.players]
             .sort((a, b) => b.score - a.score)
             .map((player, index) => (
               <div
                 key={player.id}
-                className={`flex items-center justify-between p-2 rounded-lg transition-all ${
+                className={`flex items-center justify-between p-1 md:p-2 rounded-lg transition-all ${
                   player.walletAddress === myPlayer?.walletAddress
                     ? "bg-blue-500/30 border border-blue-400"
                     : "bg-gray-700/50"
                 }`}
               >
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center space-x-1 md:space-x-2">
                   <div
-                    className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
+                    className={`w-5 h-5 md:w-6 md:h-6 rounded-full flex items-center justify-center text-xs font-bold ${
                       index === 0
                         ? "bg-yellow-500 text-black"
                         : index === 1
@@ -193,7 +195,7 @@ export default function OrbCollectorHUD({
                     {index + 1}
                   </div>
                   <div>
-                    <div className="text-white text-sm font-medium">
+                    <div className="text-white text-xs md:text-sm font-medium">
                       {player.nickname}
                       {player.walletAddress === myPlayer?.walletAddress && (
                         <span className="text-blue-400 ml-1">(You)</span>
@@ -202,7 +204,7 @@ export default function OrbCollectorHUD({
                   </div>
                 </div>
                 <div className="text-right">
-                  <div className="text-yellow-400 font-bold">
+                  <div className="text-yellow-400 font-bold text-sm">
                     {player.score}
                   </div>
                   <div className="text-gray-400 text-xs">pts</div>
@@ -213,50 +215,54 @@ export default function OrbCollectorHUD({
       </div>
 
       {/* Prize Pool */}
-      <div className="bg-gradient-to-br from-green-800/50 to-emerald-800/50 p-4 rounded-xl border border-green-400">
-        <h3 className="text-white font-bold text-lg mb-3">💰 Prize Pool</h3>
-        <div className="space-y-2">
+      <div className="bg-gradient-to-br from-green-800/50 to-emerald-800/50 p-3 md:p-4 rounded-xl border border-green-400">
+        <h3 className="text-white font-bold text-base md:text-lg mb-2 md:mb-3">
+          💰 Prize Pool
+        </h3>
+        <div className="space-y-1 md:space-y-2">
           <div className="flex justify-between items-center">
-            <span className="text-gray-300">Total Pool:</span>
-            <span className="text-green-400 font-bold text-xl">
-              {getTotalPrizePool().toFixed(2)} gGOR
+            <span className="text-gray-300 text-sm">Total Pool:</span>
+            <span className="text-green-400 font-bold text-lg md:text-xl">
+              {getTotalPrizePool().toFixed(2)} GOR
             </span>
           </div>
-          <div className="text-xs text-gray-400 mt-2">
+          <div className="text-xs text-gray-400 mt-1 md:mt-2">
             <div>
-              🥇 1st Place: {(getTotalPrizePool() * 0.5).toFixed(2)} gGOR (50%)
+              🥇 1st: {(getTotalPrizePool() * 0.5).toFixed(2)} GOR (50%)
             </div>
             <div>
-              🥈 2nd Place: {(getTotalPrizePool() * 0.3).toFixed(2)} gGOR (30%)
+              🥈 2nd: {(getTotalPrizePool() * 0.3).toFixed(2)} GOR (30%)
             </div>
             <div>
-              🥉 3rd Place: {(getTotalPrizePool() * 0.2).toFixed(2)} gGOR (20%)
+              🥉 3rd: {(getTotalPrizePool() * 0.2).toFixed(2)} GOR (20%)
             </div>
           </div>
         </div>
       </div>
 
       {/* Orb Types Guide */}
-      <div className="bg-gradient-to-br from-gray-800 to-gray-900 p-4 rounded-xl border border-purple-400">
-        <h3 className="text-white font-bold text-lg mb-3">🔮 Orb Types</h3>
-        <div className="space-y-2 text-sm">
+      <div className="bg-gradient-to-br from-gray-800 to-gray-900 p-3 md:p-4 rounded-xl border border-purple-400">
+        <h3 className="text-white font-bold text-base md:text-lg mb-2 md:mb-3">
+          🔮 Orb Types
+        </h3>
+        <div className="space-y-1 md:space-y-2 text-xs md:text-sm">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
-              <div className="w-3 h-3 rounded-full bg-blue-500"></div>
+              <div className="w-2 h-2 md:w-3 md:h-3 rounded-full bg-blue-500"></div>
               <span className="text-gray-300">Common</span>
             </div>
             <span className="text-blue-400 font-bold">1 pt</span>
           </div>
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
-              <div className="w-3 h-3 rounded-full bg-purple-500"></div>
+              <div className="w-2 h-2 md:w-3 md:h-3 rounded-full bg-purple-500"></div>
               <span className="text-gray-300">Rare</span>
             </div>
             <span className="text-purple-400 font-bold">3 pts</span>
           </div>
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
-              <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
+              <div className="w-2 h-2 md:w-3 md:h-3 rounded-full bg-yellow-500"></div>
               <span className="text-gray-300">Legendary</span>
             </div>
             <span className="text-yellow-400 font-bold">5 pts</span>
@@ -265,15 +271,17 @@ export default function OrbCollectorHUD({
       </div>
 
       {/* Game Info */}
-      <div className="bg-gradient-to-br from-gray-800 to-gray-900 p-4 rounded-xl border border-gray-600">
+      <div className="bg-gradient-to-br from-gray-800 to-gray-900 p-3 md:p-4 rounded-xl border border-gray-600">
         <div className="text-center">
-          <div className="text-gray-400 text-sm">Game ID</div>
+          <div className="text-gray-400 text-xs md:text-sm">Game ID</div>
           <div className="text-gray-300 text-xs font-mono">
             {gameState.gameId || "Waiting..."}
           </div>
-          <div className="text-gray-400 text-sm mt-2">Status</div>
+          <div className="text-gray-400 text-xs md:text-sm mt-1 md:mt-2">
+            Status
+          </div>
           <div
-            className={`text-sm font-bold capitalize ${
+            className={`text-xs md:text-sm font-bold capitalize ${
               gameState.status === "playing"
                 ? "text-green-400"
                 : gameState.status === "countdown"
@@ -296,10 +304,12 @@ export default function OrbCollectorHUD({
 
       {/* Active Orbs Counter */}
       {gameState.status === "playing" && (
-        <div className="bg-gradient-to-br from-indigo-800/50 to-purple-800/50 p-3 rounded-xl border border-indigo-400">
+        <div className="bg-gradient-to-br from-indigo-800/50 to-purple-800/50 p-2 md:p-3 rounded-xl border border-indigo-400">
           <div className="text-center">
-            <div className="text-indigo-300 text-sm">Active Orbs</div>
-            <div className="text-white text-2xl font-bold">
+            <div className="text-indigo-300 text-xs md:text-sm">
+              Active Orbs
+            </div>
+            <div className="text-white text-xl md:text-2xl font-bold">
               {gameState.orbs.length}
             </div>
             <div className="text-xs text-gray-400">Collect them all!</div>

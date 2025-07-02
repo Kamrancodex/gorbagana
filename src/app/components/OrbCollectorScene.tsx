@@ -11,6 +11,17 @@ import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { OrbitControls, Sphere, Box, Text, useGLTF } from "@react-three/drei";
 import * as THREE from "three";
 
+// Mobile detection utility
+const isMobileDevice = () => {
+  if (typeof window === "undefined") return false;
+  return (
+    /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+      navigator.userAgent
+    ) ||
+    (window.innerWidth <= 768 && "ontouchstart" in window)
+  );
+};
+
 // Error Boundary for 3D Model Loading
 class ErrorBoundary extends React.Component<
   {
@@ -602,15 +613,205 @@ function NeonArena() {
   );
 }
 
-// Movement Controller Component
+// Mobile Touch Controls Component (renders outside Canvas)
+function MobileTouchControls({
+  onKeyDown,
+  onKeyUp,
+  isActive,
+}: {
+  onKeyDown: (key: string) => void;
+  onKeyUp: (key: string) => void;
+  isActive: boolean;
+}) {
+  const [isMobile, setIsMobile] = useState(false);
+  const [activeKeys, setActiveKeys] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    setIsMobile(isMobileDevice());
+  }, []);
+
+  const handleTouchStart = useCallback(
+    (key: string) => {
+      if (!isActive) return;
+
+      setActiveKeys((prev) => {
+        const newSet = new Set(prev);
+        if (!newSet.has(key)) {
+          newSet.add(key);
+          onKeyDown(key);
+          console.log(
+            `📱 Touch pressed: ${key === " " ? "SPACE" : key.toUpperCase()}`
+          );
+        }
+        return newSet;
+      });
+    },
+    [isActive, onKeyDown]
+  );
+
+  const handleTouchEnd = useCallback(
+    (key: string) => {
+      setActiveKeys((prev) => {
+        const newSet = new Set(prev);
+        if (newSet.has(key)) {
+          newSet.delete(key);
+          onKeyUp(key);
+          console.log(
+            `📱 Touch released: ${key === " " ? "SPACE" : key.toUpperCase()}`
+          );
+        }
+        return newSet;
+      });
+    },
+    [onKeyUp]
+  );
+
+  // Don't render on desktop
+  if (!isMobile) return null;
+
+  const buttonClass =
+    "select-none rounded-lg font-bold text-white border-2 shadow-lg transition-all duration-150";
+  const getButtonStyle = (key: string, color: string) =>
+    `${buttonClass} ${
+      activeKeys.has(key)
+        ? `${color} scale-95 shadow-inner`
+        : `bg-gray-800/80 border-gray-600 active:${color} active:scale-95`
+    }`;
+
+  return (
+    <div className="fixed inset-0 pointer-events-none z-40">
+      {/* Movement Controls - Left Side */}
+      <div className="absolute left-4 bottom-20 pointer-events-auto">
+        <div className="relative w-32 h-32">
+          {/* W - Up */}
+          <button
+            className={`absolute top-0 left-1/2 transform -translate-x-1/2 w-12 h-12 text-lg ${getButtonStyle(
+              "w",
+              "bg-blue-600 border-blue-400"
+            )}`}
+            onTouchStart={(e) => {
+              e.preventDefault();
+              handleTouchStart("w");
+            }}
+            onTouchEnd={() => handleTouchEnd("w")}
+            onMouseDown={() => handleTouchStart("w")}
+            onMouseUp={() => handleTouchEnd("w")}
+            onMouseLeave={() => handleTouchEnd("w")}
+          >
+            W
+          </button>
+
+          {/* A - Left */}
+          <button
+            className={`absolute left-0 top-1/2 transform -translate-y-1/2 w-12 h-12 text-lg ${getButtonStyle(
+              "a",
+              "bg-blue-600 border-blue-400"
+            )}`}
+            onTouchStart={(e) => {
+              e.preventDefault();
+              handleTouchStart("a");
+            }}
+            onTouchEnd={() => handleTouchEnd("a")}
+            onMouseDown={() => handleTouchStart("a")}
+            onMouseUp={() => handleTouchEnd("a")}
+            onMouseLeave={() => handleTouchEnd("a")}
+          >
+            A
+          </button>
+
+          {/* S - Down */}
+          <button
+            className={`absolute bottom-0 left-1/2 transform -translate-x-1/2 w-12 h-12 text-lg ${getButtonStyle(
+              "s",
+              "bg-blue-600 border-blue-400"
+            )}`}
+            onTouchStart={(e) => {
+              e.preventDefault();
+              handleTouchStart("s");
+            }}
+            onTouchEnd={() => handleTouchEnd("s")}
+            onMouseDown={() => handleTouchStart("s")}
+            onMouseUp={() => handleTouchEnd("s")}
+            onMouseLeave={() => handleTouchEnd("s")}
+          >
+            S
+          </button>
+
+          {/* D - Right */}
+          <button
+            className={`absolute right-0 top-1/2 transform -translate-y-1/2 w-12 h-12 text-lg ${getButtonStyle(
+              "d",
+              "bg-blue-600 border-blue-400"
+            )}`}
+            onTouchStart={(e) => {
+              e.preventDefault();
+              handleTouchStart("d");
+            }}
+            onTouchEnd={() => handleTouchEnd("d")}
+            onMouseDown={() => handleTouchStart("d")}
+            onMouseUp={() => handleTouchEnd("d")}
+            onMouseLeave={() => handleTouchEnd("d")}
+          >
+            D
+          </button>
+        </div>
+
+        {/* Movement Label */}
+        <div className="text-center mt-2 text-white text-sm font-medium">
+          🎮 Move
+        </div>
+      </div>
+
+      {/* Jump Button - Right Side */}
+      <div className="absolute right-4 bottom-20 pointer-events-auto">
+        <button
+          className={`w-16 h-16 text-xl ${getButtonStyle(
+            " ",
+            "bg-green-600 border-green-400"
+          )}`}
+          onTouchStart={(e) => {
+            e.preventDefault();
+            handleTouchStart(" ");
+          }}
+          onTouchEnd={() => handleTouchEnd(" ")}
+          onMouseDown={() => handleTouchStart(" ")}
+          onMouseUp={() => handleTouchEnd(" ")}
+          onMouseLeave={() => handleTouchEnd(" ")}
+        >
+          ⬆️
+        </button>
+
+        {/* Jump Label */}
+        <div className="text-center mt-2 text-white text-sm font-medium">
+          🚀 Jump
+        </div>
+      </div>
+
+      {/* Mobile Instructions */}
+      {isActive && (
+        <div className="absolute top-4 left-1/2 transform -translate-x-1/2 pointer-events-auto">
+          <div className="bg-black/60 text-white px-4 py-2 rounded-lg text-sm text-center border border-purple-400">
+            📱 Use touch controls to move and collect orbs!
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Enhanced Movement Controller with Mobile Support
 function MovementController({
   onMove,
   isActive,
   currentPosition,
+  onKeyDown,
+  onKeyUp,
 }: {
   onMove: (position: { x: number; y: number; z: number }) => void;
   isActive: boolean;
   currentPosition: { x: number; y: number; z: number };
+  onKeyDown?: (key: string) => void;
+  onKeyUp?: (key: string) => void;
 }) {
   const [keys, setKeys] = useState<{ [key: string]: boolean }>({});
   const moveSpeed = 0.2; // Increased speed
@@ -620,6 +821,38 @@ function MovementController({
   useEffect(() => {
     positionRef.current = currentPosition;
   }, [currentPosition]);
+
+  // Simulate key press/release functions for mobile touch controls
+  const simulateKeyDown = useCallback(
+    (key: string) => {
+      setKeys((prev) => {
+        const newKeys = { ...prev, [key]: true };
+        return newKeys;
+      });
+      if (onKeyDown) onKeyDown(key);
+    },
+    [onKeyDown]
+  );
+
+  const simulateKeyUp = useCallback(
+    (key: string) => {
+      setKeys((prev) => {
+        const newKeys = { ...prev, [key]: false };
+        return newKeys;
+      });
+      if (onKeyUp) onKeyUp(key);
+    },
+    [onKeyUp]
+  );
+
+  // Expose key simulation functions to parent
+  useEffect(() => {
+    // Store these functions on the MovementController ref for external access
+    if (typeof window !== "undefined") {
+      (window as any).simulateKeyDown = simulateKeyDown;
+      (window as any).simulateKeyUp = simulateKeyUp;
+    }
+  }, [simulateKeyDown, simulateKeyUp]);
 
   useEffect(() => {
     if (!isActive) return;
@@ -739,6 +972,7 @@ function MovementController({
     }
   });
 
+  // No longer rendering MobileTouchControls here
   return null;
 }
 
@@ -1010,16 +1244,36 @@ export default function OrbCollectorScene(props: OrbCollectorSceneProps) {
   // Enhanced game container with auto-adjust settings
   const { isFullscreen } = props;
 
+  // Mobile touch controls integration
+  const handleMobileKeyDown = useCallback((key: string) => {
+    if (typeof window !== "undefined" && (window as any).simulateKeyDown) {
+      (window as any).simulateKeyDown(key);
+    }
+  }, []);
+
+  const handleMobileKeyUp = useCallback((key: string) => {
+    if (typeof window !== "undefined" && (window as any).simulateKeyUp) {
+      (window as any).simulateKeyUp(key);
+    }
+  }, []);
+
+  // Detect mobile device for optimized camera settings
+  const isMobile = isMobileDevice();
+
   return (
     <div
       className={`relative ${
-        isFullscreen ? "w-screen h-screen" : "w-full h-[70vh]"
+        isFullscreen ? "w-screen h-screen" : "w-full h-full"
       } bg-gradient-to-b from-purple-900 via-blue-900 to-black`}
     >
       <Canvas
         camera={{
-          position: [0, 15, 15],
-          fov: isFullscreen ? 70 : 60,
+          position: [
+            0,
+            isFullscreen ? 15 : isMobile ? 12 : 15,
+            isFullscreen ? 15 : isMobile ? 12 : 15,
+          ],
+          fov: isFullscreen ? 70 : isMobile ? 75 : 60,
           near: 0.1,
           far: 1000,
         }}
@@ -1059,8 +1313,8 @@ export default function OrbCollectorScene(props: OrbCollectorSceneProps) {
           enablePan={false}
           enableZoom={true}
           enableRotate={true}
-          minDistance={8}
-          maxDistance={25}
+          minDistance={isMobile ? 6 : 8}
+          maxDistance={isMobile ? 20 : 25}
           minPolarAngle={Math.PI / 6}
           maxPolarAngle={Math.PI / 2.2}
           autoRotate={false}
@@ -1071,12 +1325,19 @@ export default function OrbCollectorScene(props: OrbCollectorSceneProps) {
         <fog attach="fog" args={["#000033", 20, 80]} />
       </Canvas>
 
+      {/* Mobile Touch Controls - Rendered outside Canvas */}
+      <MobileTouchControls
+        onKeyDown={handleMobileKeyDown}
+        onKeyUp={handleMobileKeyUp}
+        isActive={props.gameState.status === "playing"}
+      />
+
       {/* Game overlay UI */}
-      <div className="absolute top-4 left-4 right-4 pointer-events-none">
+      <div className="absolute top-2 md:top-4 left-2 md:left-4 right-2 md:right-4 pointer-events-none">
         <div className="flex justify-between items-start">
           {/* Game status */}
-          <div className="bg-black/70 rounded-lg p-3 backdrop-blur-sm">
-            <div className="text-white font-bold text-lg">
+          <div className="bg-black/70 rounded-lg p-2 md:p-3 backdrop-blur-sm">
+            <div className="text-white font-bold text-sm md:text-lg">
               {props.gameState.status === "waiting" &&
                 "⏳ Waiting for players..."}
               {props.gameState.status === "countdown" &&
@@ -1088,8 +1349,8 @@ export default function OrbCollectorScene(props: OrbCollectorSceneProps) {
           </div>
 
           {/* Live leaderboard */}
-          <div className="bg-black/70 rounded-lg p-3 backdrop-blur-sm max-w-xs">
-            <div className="text-yellow-400 font-bold text-sm mb-2">
+          <div className="bg-black/70 rounded-lg p-2 md:p-3 backdrop-blur-sm max-w-xs">
+            <div className="text-yellow-400 font-bold text-xs md:text-sm mb-1 md:mb-2">
               🏆 Live Rankings
             </div>
             {props.gameState.players
