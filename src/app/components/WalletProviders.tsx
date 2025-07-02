@@ -38,34 +38,44 @@ export function WalletProviders({ children }: WalletProvidersProps) {
     );
   }, []);
 
+  // Detect if we're on mobile for mobile-specific wallet handling
+  const isMobile = useMemo(() => {
+    if (typeof window === "undefined") return false;
+    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+      navigator.userAgent
+    );
+  }, []);
+
   // Configure multiple wallet adapters for better compatibility
   const wallets = useMemo(() => {
     const walletAdapters = [];
 
     try {
-      // Primary: Backpack (for Gorbagana)
-      walletAdapters.push(new BackpackWalletAdapter());
-    } catch (error) {
-      console.log("Backpack wallet not available:", error);
-    }
-
-    try {
-      // Fallback: Phantom
+      // Primary: Phantom (better mobile support)
       walletAdapters.push(new PhantomWalletAdapter());
     } catch (error) {
       console.log("Phantom wallet not available:", error);
     }
 
     try {
-      // Fallback: Solflare
+      // Secondary: Solflare (good mobile support)
       walletAdapters.push(new SolflareWalletAdapter());
     } catch (error) {
       console.log("Solflare wallet not available:", error);
     }
 
-    console.log(`🦊 Configured ${walletAdapters.length} wallet adapters`);
+    try {
+      // Tertiary: Backpack (for Gorbagana when available)
+      walletAdapters.push(new BackpackWalletAdapter());
+    } catch (error) {
+      console.log("Backpack wallet not available:", error);
+    }
+
+    console.log(
+      `🦊 Configured ${walletAdapters.length} wallet adapters (Mobile: ${isMobile})`
+    );
     return walletAdapters;
-  }, []);
+  }, [isMobile]);
 
   // Show loading state during hydration
   if (!mounted) {
@@ -83,12 +93,31 @@ export function WalletProviders({ children }: WalletProvidersProps) {
     <ConnectionProvider endpoint={endpoint}>
       <WalletProvider
         wallets={wallets}
-        autoConnect={false}
+        autoConnect={isMobile} // Enable auto-connect on mobile for better UX
         onError={(error) => {
           console.warn("Wallet error:", error);
+
+          // Handle mobile-specific wallet errors
+          if (isMobile && error.message?.includes("User rejected")) {
+            console.log("Mobile user cancelled wallet connection");
+            return; // Don't show error for user cancellation
+          }
+
           // Don't throw for wallet not ready errors
-          if (error.name !== "WalletNotReadyError") {
+          if (
+            error.name !== "WalletNotReadyError" &&
+            error.name !== "WalletNotSelectedError"
+          ) {
             console.error("Critical wallet error:", error);
+
+            // Show mobile-friendly error message
+            if (isMobile) {
+              setTimeout(() => {
+                alert(
+                  `Wallet connection failed. Please ensure your wallet app is installed and try again.\n\nError: ${error.message}`
+                );
+              }, 100);
+            }
           }
         }}
       >

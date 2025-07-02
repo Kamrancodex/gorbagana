@@ -216,48 +216,48 @@ export default function Home() {
           {/* Live Stats */}
           <div
             ref={statsRef}
-            className="grid grid-cols-3 gap-8 mb-20 max-w-4xl mx-auto"
+            className="grid grid-cols-3 gap-4 mb-16 max-w-3xl mx-auto"
           >
             <div className="text-center group">
-              <div className="bg-gray-900/50 backdrop-blur-xl rounded-2xl p-8 border border-purple-500/20 hover:border-purple-400/40 transition-all duration-300 hover:scale-105">
-                <UsersIcon className="w-12 h-12 text-purple-400 mx-auto mb-4" />
-                <div className="text-5xl font-bold text-white mb-2 tabular-nums">
+              <div className="bg-gray-900/50 backdrop-blur-xl rounded-xl p-4 border border-purple-500/20 hover:border-purple-400/40 transition-all duration-300 hover:scale-105">
+                <UsersIcon className="w-8 h-8 text-purple-400 mx-auto mb-2" />
+                <div className="text-3xl font-bold text-white mb-1 tabular-nums">
                   {currentStats.players.toLocaleString()}
                 </div>
-                <div className="text-purple-300 font-semibold tracking-wide">
+                <div className="text-purple-300 font-semibold tracking-wide text-sm">
                   ACTIVE PLAYERS
                 </div>
-                <div className="text-sm text-gray-400 mt-2">
+                <div className="text-xs text-gray-400 mt-1">
                   Ready for Competition
                 </div>
               </div>
             </div>
 
             <div className="text-center group">
-              <div className="bg-gray-900/50 backdrop-blur-xl rounded-2xl p-8 border border-purple-500/20 hover:border-purple-400/40 transition-all duration-300 hover:scale-105">
-                <CurrencyDollarIcon className="w-12 h-12 text-purple-400 mx-auto mb-4" />
-                <div className="text-5xl font-bold text-white mb-2 tabular-nums">
+              <div className="bg-gray-900/50 backdrop-blur-xl rounded-xl p-4 border border-purple-500/20 hover:border-purple-400/40 transition-all duration-300 hover:scale-105">
+                <CurrencyDollarIcon className="w-8 h-8 text-purple-400 mx-auto mb-2" />
+                <div className="text-3xl font-bold text-white mb-1 tabular-nums">
                   {currentStats.prizes.toLocaleString()}
                 </div>
-                <div className="text-purple-300 font-semibold tracking-wide">
+                <div className="text-purple-300 font-semibold tracking-wide text-sm">
                   GOR DISTRIBUTED
                 </div>
-                <div className="text-sm text-gray-400 mt-2">
+                <div className="text-xs text-gray-400 mt-1">
                   Real Cryptocurrency
                 </div>
               </div>
             </div>
 
             <div className="text-center group">
-              <div className="bg-gray-900/50 backdrop-blur-xl rounded-2xl p-8 border border-purple-500/20 hover:border-purple-400/40 transition-all duration-300 hover:scale-105">
-                <TrophyIcon className="w-12 h-12 text-purple-400 mx-auto mb-4" />
-                <div className="text-5xl font-bold text-white mb-2 tabular-nums">
+              <div className="bg-gray-900/50 backdrop-blur-xl rounded-xl p-4 border border-purple-500/20 hover:border-purple-400/40 transition-all duration-300 hover:scale-105">
+                <TrophyIcon className="w-8 h-8 text-purple-400 mx-auto mb-2" />
+                <div className="text-3xl font-bold text-white mb-1 tabular-nums">
                   {currentStats.games.toLocaleString()}
                 </div>
-                <div className="text-purple-300 font-semibold tracking-wide">
+                <div className="text-purple-300 font-semibold tracking-wide text-sm">
                   GAMES COMPLETED
                 </div>
-                <div className="text-sm text-gray-400 mt-2">
+                <div className="text-xs text-gray-400 mt-1">
                   Competitive Matches
                 </div>
               </div>
