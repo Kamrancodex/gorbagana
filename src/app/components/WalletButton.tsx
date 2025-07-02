@@ -9,8 +9,15 @@ export default function WalletButton() {
   const [showWalletPrompt, setShowWalletPrompt] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
   const [connectionAttempts, setConnectionAttempts] = useState(0);
-  const { wallets, select, wallet, connected, connecting, disconnect } =
-    useWallet();
+  const {
+    wallets,
+    select,
+    connect,
+    wallet,
+    connected,
+    connecting,
+    disconnect,
+  } = useWallet();
 
   // Enhanced mobile detection
   const isMobile =
@@ -111,8 +118,11 @@ export default function WalletButton() {
     try {
       console.log(`🔗 Attempting to connect to ${walletName} on mobile...`);
 
-      // Select the wallet and let the adapter handle the connection
+      // Select the wallet then initiate connection
       select(selectedWallet.adapter.name);
+
+      // Initiate connection (deeplink opens wallet app on mobile)
+      await connect();
 
       // Show mobile-specific guidance immediately
       setTimeout(() => {
