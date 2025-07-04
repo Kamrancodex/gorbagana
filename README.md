@@ -72,7 +72,7 @@ Player Payment → Blockchain Validation → Escrow Tracking → Game Completion
 
 ```javascript
 // GOR token configuration
-const GOR_MINT = new PublicKey("11111111111111111111111111111112");
+const GOR_MINT = new PublicKey("71Jvq4Epe2FCJ7JFSF7jLXdNk1Wy4Bhqd8iL6bEFELvg");
 const GOR_DECIMALS = 9; // Native Gorbagana token
 const GORBAGANA_RPC = "https://rpc.gorbagana.wtf/";
 
@@ -380,13 +380,16 @@ NEXT_PUBLIC_WEBSOCKET_URL=http://localhost:3001
 
 ### **Installation Steps**
 
-```bash
-# 1. Clone and setup
-git clone <repository>
+````bash
+# 1. Clone and setup FRONTEND
+git clone ``` https://github.com/Kamrancodex/gorbagana ```
 cd gorbagana-game
 
+git clone ```https://github.com/Kamrancodex/gobagan-backend ```
+cd backend
+
 # 2. Install dependencies
-npm install
+gorbagana-game npm install
 cd backend && npm install
 
 # 3. Configure environment
@@ -399,9 +402,9 @@ node fund-platform-wallet.js balance
 node fund-platform-wallet.js fund '[source_private_key]' 20.0
 
 # 5. Start services
-node server.js & # Backend on port 3001
-cd .. && npm run dev # Frontend on port 3000
-```
+cd backend node server.js & # Backend on port 3001
+cd gorbagana-game && npm run dev # Frontend on port 3000
+````
 
 ### **Health Checks**
 
